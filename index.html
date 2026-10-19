@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>随手玩 · 三个小玩意</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#07100c; --card:#0e1c16; --line:rgba(255,255,255,.09);
+  --gold:#e3c27a; --teal:#4fd1a5; --ink:#e9f0ec; --dim:#7d938a;
+}
+body{
+  min-height:100vh;background:var(--bg);color:var(--ink);
+  font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+  padding:44px 18px 60px;position:relative;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(70% 50% at 50% -10%,rgba(79,209,165,.16),transparent 70%),
+    radial-gradient(50% 40% at 85% 100%,rgba(227,194,122,.10),transparent 70%);
+}
+.wrap{max-width:760px;margin:0 auto;position:relative}
+header{text-align:center;margin-bottom:38px}
+h1{
+  font-size:31px;font-weight:900;letter-spacing:9px;text-indent:9px;
+  background:linear-gradient(180deg,#f4ecd8,#c8a75e);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.sub{margin-top:11px;font-size:12.5px;color:var(--dim);letter-spacing:1.6px;line-height:1.9}
+.list{display:flex;flex-direction:column;gap:13px}
+a.card{
+  display:flex;align-items:center;gap:15px;text-decoration:none;color:inherit;
+  background:linear-gradient(160deg,#12241d,#0c1a15);
+  border:1px solid var(--line);border-radius:16px;padding:16px 17px;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;
+  position:relative;overflow:hidden;
+}
+a.card::after{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .16s;
+  background:radial-gradient(120% 140% at 0% 0%,rgba(79,209,165,.13),transparent 62%);
+}
+a.card:hover{transform:translateY(-2px);border-color:rgba(79,209,165,.4);
+  box-shadow:0 14px 34px rgba(0,0,0,.5)}
+a.card:hover::after{opacity:1}
+.ico{
+  width:52px;height:52px;border-radius:14px;flex:none;display:flex;
+  align-items:center;justify-content:center;font-size:25px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 6px 16px rgba(0,0,0,.35);
+}
+.i1{background:linear-gradient(150deg,#1f5c46,#0d2a20)}
+.i2{background:linear-gradient(150deg,#4a2a66,#241336)}
+.i3{background:linear-gradient(150deg,#2d5060,#14272f)}
+.body{flex:1;min-width:0}
+.name{font-size:16px;font-weight:900;letter-spacing:1.2px;display:flex;align-items:center;gap:7px}
+.desc{font-size:11.5px;color:var(--dim);margin-top:5px;line-height:1.65}
+.tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.tg{font-size:9.5px;font-weight:900;letter-spacing:.6px;padding:2px 7px;border-radius:999px;
+  background:rgba(79,209,165,.12);color:#7fd9b6;border:1px solid rgba(79,209,165,.24)}
+.tg.g{background:rgba(227,194,122,.11);color:#dcc084;border-color:rgba(227,194,122,.24)}
+.arrow{flex:none;color:#3d5a4e;font-size:19px;transition:transform .16s,color .16s}
+a.card:hover .arrow{transform:translateX(4px);color:var(--teal)}
+footer{margin-top:34px;text-align:center;font-size:11px;color:#4e645a;line-height:2}
+footer a{color:#6b8a7c;text-decoration:none;border-bottom:1px dotted #3b5248}
+@media(max-width:430px){
+  body{padding:32px 14px 46px}
+  h1{font-size:26px;letter-spacing:7px}
+  .ico{width:46px;height:46px;font-size:22px}
+  .name{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>随手玩</h1>
+    <div class="sub">三个小玩意 · 点开就玩 · 不用下载不用注册</div>
+  </header>
+
+  <div class="list">
+    <a class="card" href="./life/">
+      <div class="ico i1">🎲</div>
+      <div class="body">
+        <div class="name">人生重开模拟器</div>
+        <div class="desc">抽天赋、定出身，看看这辈子能活成什么样。</div>
+        <div class="tags"><span class="tg">文字</span><span class="tg">一局几分钟</span><span class="tg g">有存档</span></div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a class="card" href="./douluo/">
+      <div class="ico i2">🌀</div>
+      <div class="body">
+        <div class="name">斗罗剧情转盘</div>
+        <div class="desc">转生斗罗大陆，一年一转。人类或魂兽、八条隐藏路线、五十多种结局。</div>
+        <div class="tags"><span class="tg">转盘</span><span class="tg">一局 50+ 转</span><span class="tg g">有存档</span></div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+
+    <a class="card" href="./poker/">
+      <div class="ico i3">♠</div>
+      <div class="body">
+        <div class="name">德州扑克 · 单机</div>
+        <div class="desc">八个性格不同的对手，会看牌、会诈唬、会在强牌上装弱。带新手教程。</div>
+        <div class="tags"><span class="tg">牌类</span><span class="tg">人机对战</span><span class="tg g">带教程</span></div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
+  </div>
+
+  <footer>
+    手机上建议竖屏 · 三个都是单文件网页，断网也能玩<br>
+    <a href="https://github.com/" target="_blank" rel="noopener">托管在 GitHub Pages</a>
+  </footer>
+</div>
+</body>
+</html>

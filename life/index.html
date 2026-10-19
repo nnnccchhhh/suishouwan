@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>人生重开模拟器</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(circle at 50% -10%,#1e2748 0%,#0a0e1a 65%);
+    color:#e8e3d3;
+    font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+    min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
+    padding:18px 14px 40px;
+  }
+  .app{width:100%;max-width:760px}
+  .card{
+    background:linear-gradient(180deg,rgba(30,39,72,.92),rgba(14,19,34,.95));
+    border:1px solid rgba(232,227,211,.14);
+    border-radius:16px;padding:20px;
+    box-shadow:0 18px 44px rgba(0,0,0,.5);
+  }
+  h1{font-size:26px;letter-spacing:3px;text-align:center;font-weight:700;
+     background:linear-gradient(90deg,#ffd977,#ff9d6e,#ffd977);
+     -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{text-align:center;color:#8f9ab8;font-size:13px;margin-top:8px;letter-spacing:1px}
+  .btn{
+    display:block;width:100%;padding:13px;margin-top:12px;
+    background:linear-gradient(135deg,#3a4a86,#27305c);
+    border:1px solid rgba(255,217,119,.35);border-radius:10px;
+    color:#ffe9b0;font-size:16px;font-family:inherit;letter-spacing:2px;
+    cursor:pointer;transition:.18s;
+  }
+  .btn:hover{background:linear-gradient(135deg,#4a5da3,#333d73);transform:translateY(-1px)}
+  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+  .btn.ghost{background:transparent;border-color:rgba(232,227,211,.22);color:#b9c0d4}
+  .btn.ghost:hover{background:rgba(255,255,255,.05)}
+  .btn.small{width:auto;display:inline-block;padding:8px 16px;font-size:14px;margin-right:8px}
+
+  .hidden{display:none!important}
+
+  /* ===== 属性条 ===== */
+  .statbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+    background:rgba(0,0,0,.3);border-radius:10px;padding:10px;margin-top:14px;font-size:13px}
+  .stat{flex:1;min-width:88px;text-align:center;padding:6px 4px;border-radius:8px;
+    background:rgba(255,255,255,.04)}
+  .stat b{display:block;font-size:19px;font-weight:700;margin-top:2px;font-family:Consolas,monospace}
+  .c1{color:#ff9fb0}.c2{color:#8fd0ff}.c3{color:#9fe6a0}.c4{color:#ffd977}
+
+  /* ===== 天赋 ===== */
+  .talents{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+  @media(max-width:560px){.talents{grid-template-columns:1fr}}
+  .talent{
+    border:1px solid rgba(255,255,255,.13);border-radius:10px;padding:10px 12px;
+    background:rgba(255,255,255,.03);cursor:pointer;transition:.15s;position:relative
+  }
+  .talent:hover{background:rgba(255,255,255,.08)}
+  .talent.on{border-color:#ffd977;background:rgba(255,217,119,.13);
+    box-shadow:0 0 0 1px rgba(255,217,119,.5) inset}
+  .talent .nm{font-size:14px;font-weight:700}
+  .talent .ds{font-size:12px;color:#98a2bd;margin-top:4px;line-height:1.5}
+  .talent .rr{position:absolute;top:9px;right:11px;font-size:11px;opacity:.85}
+
+  /* ===== 加点 ===== */
+  .row{display:flex;align-items:center;justify-content:space-between;
+    padding:11px 14px;margin-top:9px;border-radius:10px;background:rgba(255,255,255,.04)}
+  .row .lb{font-size:15px;letter-spacing:1px}
+  .row .pt{font-family:Consolas,monospace;font-size:20px;font-weight:700;min-width:56px;text-align:center}
+  .pm{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.06);color:#e8e3d3;font-size:19px;cursor:pointer;font-family:inherit}
+  .pm:hover{background:rgba(255,255,255,.14)}
+  .pm:disabled{opacity:.28;cursor:not-allowed}
+  .pts{margin-top:14px;text-align:center;font-size:15px;color:#ffd977;letter-spacing:1px}
+  .bo{margin-left:8px;font-size:12px;color:#c07bff}
+
+  /* ===== 人生 ===== */
+  .lifebox{
+    margin-top:14px;height:min(56vh,460px);overflow-y:auto;padding:6px 4px 6px 2px;
+    font-size:15px;line-height:1.95;scroll-behavior:smooth;
+  }
+  .lifebox::-webkit-scrollbar{width:7px}
+  .lifebox::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:4px}
+  .ln{opacity:0;animation:fin .32s forwards;padding:1px 0}
+  @keyframes fin{to{opacity:1}}
+  .yr{color:#ffd977;font-weight:700;margin-top:9px;font-family:Consolas,monospace}
+  .bad{color:#ff8f8f}
+  .good{color:#8fe6a0}
+  .tap{color:#c07bff}
+  .die{color:#ff5a5a;font-weight:700;font-size:17px;letter-spacing:2px}
+
+  .hint{text-align:center;color:#7d87a3;font-size:12px;margin-top:12px}
+  .taprow{
+    margin-top:10px;padding:11px;border-radius:10px;cursor:pointer;
+    text-align:center;border:1px dashed rgba(255,217,119,.42);
+    background:rgba(255,217,119,.06);user-select:none;transition:.15s;
+  }
+  .taprow:hover{background:rgba(255,217,119,.13)}
+  .taprow.off{display:none}
+  .taphint{color:#ffd977;font-size:13px;letter-spacing:2px;animation:pulse 1.3s infinite}
+  @keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+  .ctrl{text-align:center;margin-top:10px}
+  .ctrl .btn{margin:0 4px}
+  .choicebox{margin-top:10px}
+  .choicebox.off{display:none}
+  .cq{font-size:15px;color:#ffd977;margin-bottom:9px;letter-spacing:1px;line-height:1.65}
+  .choicebtn{
+    display:block;width:100%;text-align:left;padding:11px 14px;margin-top:7px;
+    background:linear-gradient(135deg,#2c3a6b,#1f2749);
+    border:1px solid rgba(255,217,119,.32);border-radius:10px;
+    color:#e8e3d3;font-size:14px;font-family:inherit;cursor:pointer;transition:.15s;
+  }
+  .choicebtn:hover:not(:disabled){background:linear-gradient(135deg,#3a4c8a,#28325f);transform:translateX(3px)}
+  .choicebtn:disabled{opacity:.4;cursor:not-allowed;border-color:rgba(255,255,255,.14)}
+  .choicebtn .lock{color:#ff9d9d;font-size:12px}
+  .tip{
+    margin-top:12px;padding:10px 12px;border-radius:9px;
+    background:rgba(255,217,119,.07);border:1px solid rgba(255,217,119,.2);
+    font-size:12.5px;color:#b9c0d4;line-height:1.75;
+  }
+  .tip b{color:#ffd977}
+  .btn.god{
+    background:linear-gradient(135deg,#7c5a16,#4a370d);
+    border-color:#ffc038;color:#ffe9a8;font-weight:700;
+    box-shadow:0 0 20px rgba(255,192,56,.16);
+  }
+  .btn.god:hover{background:linear-gradient(135deg,#9e7620,#61480f)}
+  .glist{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  @media(max-width:560px){.glist{grid-template-columns:1fr}}
+  .gcard{
+    border:1px solid rgba(255,192,56,.35);border-radius:12px;padding:14px;
+    background:linear-gradient(160deg,rgba(124,90,22,.4),rgba(26,18,6,.6));
+    cursor:pointer;transition:.15s;
+  }
+  .gcard:hover{transform:translateY(-2px);border-color:#ffc038;background:linear-gradient(160deg,rgba(150,110,30,.5),rgba(36,25,8,.7))}
+  .gcard .gn{font-size:16px;font-weight:700;color:#ffd977;letter-spacing:2px}
+  .gcard .gd{font-size:12.5px;color:#cdc3a8;margin-top:8px;line-height:1.7}
+  .routeopen{
+    display:block;margin:12px 0;padding:13px;border-radius:11px;text-align:center;
+    background:linear-gradient(90deg,rgba(90,140,255,.14),rgba(200,160,255,.2),rgba(90,140,255,.14));
+    border:1px solid rgba(200,180,255,.42);color:#eae2ff;
+    font-size:13.5px;letter-spacing:1px;line-height:1.9;
+  }
+  /* 隐藏路线的入口选项:一眼看出它不一样 */
+  .choicebtn.secret{
+    border-color:#e8b13c !important;
+    background:linear-gradient(90deg,rgba(168,124,32,.5),rgba(66,46,10,.72)) !important;
+    color:#ffeab4 !important;font-weight:700;letter-spacing:.5px;
+    box-shadow:0 0 0 1px rgba(255,200,80,.2),0 0 14px rgba(255,190,60,.16);
+  }
+  .choicebtn.secret:hover:not(.locked){
+    background:linear-gradient(90deg,rgba(206,154,44,.66),rgba(90,64,14,.8)) !important;
+  }
+  .choicebtn .sk{color:#ffd977;font-size:14px}
+  .endbox{text-align:center;padding:8px 0}
+  .endbox .big{font-size:30px;font-weight:700;letter-spacing:3px;margin:6px 0 12px}
+  .endbox .rank{font-size:15px;color:#c8cfe0;line-height:2.1}
+  .kw{color:#ffd977;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 开始 -->
+  <div class="card" id="s-start">
+    <h1>人生重开模拟器</h1>
+    <div class="sub">抽天赋 · 分属性 · 看这一生怎么过</div>
+    <button class="btn" onclick="startNormal()">开 始 新 人 生</button>
+    <button class="btn god" onclick="startGod()">开 挂 人 生</button>
+    <div class="hint">
+      普通模式:抽 10 个天赋挑 3 个,30 点属性自由分配。<br>
+      <span style="color:#ffc038">开挂模式:先选一个金手指,再抽一身神力天赋。</span>
+      爽归爽,坑还是有的。
+    </div>
+  </div>
+
+  <!-- 金手指 -->
+  <div class="card hidden" id="s-gk">
+    <h1 style="font-size:20px">选 一 个 金 手 指</h1>
+    <div class="sub">开挂也得讲路数 —— 四条路,活法完全不一样</div>
+    <div class="glist" id="gklist"></div>
+    <button class="btn ghost" onclick="show('s-start')">返 回</button>
+  </div>
+
+  <!-- 天赋 -->
+  <div class="card hidden" id="s-talent">
+    <h1 style="font-size:20px">抽 天 赋</h1>
+    <div class="sub">选 3 个(已选 <span id="tcount">0</span>/3)</div>
+    <div class="talents" id="tlist"></div>
+    <button class="btn" id="tbtn" disabled onclick="goAttr()">确 定</button>
+    <button class="btn ghost" onclick="goTalent()">重 抽 一 次</button>
+  </div>
+
+  <!-- 加点 -->
+  <div class="card hidden" id="s-attr">
+    <h1 style="font-size:20px">分 配 属 性</h1>
+    <div class="sub" id="attr-sub">一共 30 点,每项最多 10 点</div>
+    <div id="alist"></div>
+    <div class="pts">剩余点数:<span id="left">30</span></div>
+    <div class="tip" id="attr-tip">
+      这些数字不是摆设 —— 人生关键处会拿它们当门槛:<br>
+      <b>智力</b> 管学业和事业 · <b>体质</b> 管健康和寿命 · <b>颜值</b> 管人缘和感情 · <b>家境</b> 管钱袋子
+    </div>
+    <button class="btn" id="abtn" onclick="startLife()">开 始 人 生</button>
+  </div>
+
+  <!-- 人生 -->
+  <div class="card hidden" id="s-life">
+    <div class="statbar">
+      <div class="stat">年龄<b id="k-age" class="c4">0</b></div>
+      <div class="stat">颜值<b id="k-charm" class="c1">0</b></div>
+      <div class="stat">智力<b id="k-intel" class="c2">0</b></div>
+      <div class="stat">体质<b id="k-health" class="c3">0</b></div>
+      <div class="stat">家境<b id="k-wealth" class="c4">0</b></div>
+    </div>
+    <div class="lifebox" id="lifebox"></div>
+    <div class="choicebox off" id="choicebox"></div>
+    <div class="taprow" id="taprow" onclick="tapAdvance()">
+      <span class="taphint">▼ 点 这 里 继 续 ▼</span>
+    </div>
+    <div class="ctrl">
+      <button class="btn small" id="autobtn" onclick="toggleAuto()">自 动 播 放</button>
+      <button class="btn small" id="speedbtn" onclick="toggleSpeed()" style="display:none">加 速</button>
+      <button class="btn small ghost" onclick="skipToEnd()">直 接 看 结 局</button>
+    </div>
+  </div>
+
+  <!-- 结束 -->
+  <div class="card hidden" id="s-end">
+    <h1 style="font-size:20px">这 一 生 结 束 了</h1>
+    <div class="endbox" id="endbox"></div>
+    <button class="btn" onclick="location.reload()">再 来 一 次</button>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   人生重开模拟器 —— 全部逻辑都在这个文件里,不联网、不装东西
+   ========================================================= */
+
+const ATTRS = [
+  {k:'charm', name:'颜值', cls:'c1'},
+  {k:'intel', name:'智力', cls:'c2'},
+  {k:'health',name:'体质', cls:'c3'},
+  {k:'wealth',name:'家境', cls:'c4'}
+];
+
+const RARITY = {
+  1:{name:'普通', color:'#9aa3b8', weight:58},
+  2:{name:'稀有', color:'#5cc8ff', weight:26},
+  3:{name:'史诗', color:'#c07bff', weight:12},
+  4:{name:'传说', color:'#ffc038', weight:4}
+};
+
+/* ---------- 天赋库 ---------- */
+const TALENTS = [
+  // 普通
+  {n:'天生丽质', r:1, d:'颜值 +3', e:{charm:3}},
+  {n:'脑子好使', r:1, d:'智力 +3', e:{intel:3}},
+  {n:'身体结实', r:1, d:'体质 +3', e:{health:3}},
+  {n:'家里有矿', r:1, d:'家境 +3', e:{wealth:3}},
+  {n:'长得还行', r:1, d:'颜值 +2,体质 +1', e:{charm:2, health:1}},
+  {n:'爱看书', r:1, d:'智力 +2,家境 +1', e:{intel:2, wealth:1}},
+  {n:'饭量大', r:1, d:'体质 +2,颜值 -1', e:{health:2, charm:-1}},
+  {n:'小机灵', r:1, d:'智力 +2,颜值 +1', e:{intel:2, charm:1}},
+  {n:'老实人', r:1, d:'体质 +2,家境 +1', e:{health:2, wealth:1}},
+  {n:'嘴甜', r:1, d:'颜值 +1,家境 +2', e:{charm:1, wealth:2}},
+  {n:'手脚勤快', r:1, d:'体质 +2,智力 +1', e:{health:2, intel:1}},
+  {n:'不爱出门', r:1, d:'智力 +3,体质 -1', e:{intel:3, health:-1}},
+  {n:'从小胖', r:1, d:'体质 +4,颜值 -2', e:{health:4, charm:-2}},
+  {n:'瘦得可怜', r:1, d:'颜值 +2,体质 -1', e:{charm:2, health:-1}},
+  {n:'普通人', r:1, d:'每项 +1', e:{charm:1, intel:1, health:1, wealth:1}},
+  {n:'爱笑', r:1, d:'颜值 +1,智力 +1,体质 +1', e:{charm:1, intel:1, health:1}},
+  {n:'胆小鬼', r:1, d:'智力 +2,体质 -1', e:{intel:2, health:-1}},
+  {n:'孩子王', r:1, d:'颜值 +1,体质 +2', e:{charm:1, health:2}},
+  // 稀有
+  {n:'书香门第', r:2, d:'智力 +4', e:{intel:4}},
+  {n:'健美达人', r:2, d:'体质 +4', e:{health:4}},
+  {n:'明星脸', r:2, d:'颜值 +4', e:{charm:4}},
+  {n:'富家子弟', r:2, d:'家境 +4', e:{wealth:4}},
+  {n:'左右逢源', r:2, d:'颜值 +2,家境 +2', e:{charm:2, wealth:2}},
+  {n:'过目不忘', r:2, d:'智力 +3,体质 +1', e:{intel:3, health:1}},
+  {n:'铁打的身体', r:2, d:'体质 +3,颜值 +1', e:{health:3, charm:1}},
+  {n:'会来事', r:2, d:'家境 +3,颜值 +1', e:{wealth:3, charm:1}},
+  {n:'锦鲤附体', r:2, d:'幸运值提升,好事更容易发生', flag:'lucky'},
+  {n:'长寿基因', r:2, d:'体质 +2,寿命大幅延长', e:{health:2}, flag:'longlife'},
+  {n:'贵人相助', r:2, d:'家境 +3,智力 +1', e:{wealth:3, intel:1}},
+  {n:'皮实', r:2, d:'体质 +3,免疫一些小病小灾', e:{health:3}, flag:'tough'},
+  {n:'早慧', r:2, d:'智力 +4,体质 -1', e:{intel:4, health:-1}},
+  // 史诗
+  {n:'天选之子', r:3, d:'四项全部 +2', e:{charm:2, intel:2, health:2, wealth:2}},
+  {n:'含着金汤匙', r:3, d:'家境 +6', e:{wealth:6}},
+  {n:'绝世容颜', r:3, d:'颜值 +6', e:{charm:6}},
+  {n:'文曲星下凡', r:3, d:'智力 +6', e:{intel:6}},
+  {n:'铜皮铁骨', r:3, d:'体质 +6', e:{health:6}},
+  {n:'再来一次', r:3, d:'死一次还能活过来(仅一次)', flag:'revive'},
+  {n:'人生赢家', r:3, d:'颜值 +3,家境 +3', e:{charm:3, wealth:3}},
+  {n:'德智体美', r:3, d:'颜值+2,智力+2,体质+2', e:{charm:2, intel:2, health:2}},
+  {n:'命硬', r:3, d:'体质 +4,寿命 +15,免疫一些小病小灾', e:{health:4}, flag:'tough', flag2:'longlife'},
+  // 传说
+  {n:'六边形战士', r:4, d:'四项全部 +4', e:{charm:4, intel:4, health:4, wealth:4}},
+  {n:'气运加身', r:4, d:'幸运值拉满,四项 +2', e:{charm:2, intel:2, health:2, wealth:2}, flag:'lucky'},
+  {n:'命运宠儿', r:4, d:'死一次能复活,四项 +3', e:{charm:3, intel:3, health:3, wealth:3}, flag:'revive'},
+  {n:'万中无一', r:4, d:'智力 +8', e:{intel:8}},
+  {n:'天生神力', r:4, d:'体质 +8', e:{health:8}},
+  {n:'倾国倾城', r:4, d:'颜值 +8', e:{charm:8}},
+  {n:'首富之子', r:4, d:'家境 +8', e:{wealth:8}}
+];
+
+/* ---------- 事件库 ----------
+   a:年龄范围  t:文本  c:属性门槛  e:属性变化  p:概率  good/bad:颜色  die:必死 */
+const EVENTS = [
+// ===== 0-3 岁 =====
+{a:[0,0],t:'你出生了。是个健康的孩子。',once:1},
+{a:[0,0],t:'你出生那天,外面下着大雪。',once:1},
+{a:[0,0],t:'你出生时哭声特别响亮,接生的护士都笑了。',once:1},
+{a:[0,1],t:'你学会了翻身。',once:1,good:1},
+{a:[0,2],t:'你第一次开口叫了「妈妈」,全家高兴坏了。',once:1,good:1},
+{a:[0,2],t:'你半夜哭闹不止,父母轮流抱着你在屋里转圈。',once:1},
+{a:[1,3],t:'你把积木塞进了嘴里,卡了一下,被吓哭。',once:1,e:{health:-1},bad:1},
+{a:[1,3],t:'你发了一场高烧,烧了两天。',once:1,e:{health:-1},bad:1},
+{a:[1,3],t:'你在院子里爬来爬去,把膝盖磨破了。',once:1,e:{health:-1}},
+{a:[1,3],t:'邻居阿姨说你长得像爸爸,你妈不太高兴。',once:1},
+{a:[1,3],t:'家里给你买了一辆小推车,你推着满屋跑。',once:1,good:1},
+{a:[2,4],t:'你开始学走路,摔了一跤又爬起来。',once:1},
+{a:[2,4],t:'你被送到爷爷奶奶家住了一段时间。',once:1},
+{a:[2,4],t:'你学会了说完整的句子。',once:1,good:1,e:{intel:1}},
+{a:[2,4],t:'你趁大人不注意,把家里的遥控器丢进了鱼缸。',once:1},
+{a:[0,4],t:'父母带你去拍了第一套写真。',once:1,c:{wealth:5},good:1},
+{a:[0,4],t:'家里请了保姆照顾你。',once:1,c:{wealth:6}},
+{a:[0,4],t:'你被诊断出轻微的营养不良。',once:1,c:{wealth:3},e:{health:-1},bad:1},
+{a:[0,4],t:'你被亲戚轮流抱了一圈,谁抱你都笑。',once:1,good:1},
+{a:[1,3],t:'你拿蜡笔把家里的墙画得乱七八糟。',once:1},
+// ===== 4-6 岁 =====
+{a:[4,6],t:'你上了幼儿园,第一天哭着不肯让妈妈走。',once:1},
+{a:[4,6],t:'你在幼儿园抢了别人的玩具,被老师批评。',once:1,e:{charm:-1},bad:1},
+{a:[4,6],t:'你在幼儿园的画画比赛里拿了小红花。',once:1,c:{charm:4},good:1,e:{charm:1}},
+{a:[4,6],t:'你认识了一个特别要好的小伙伴。',once:1,good:1},
+{a:[4,6],t:'你被同班的小朋友咬了一口。',once:1,e:{health:-1},bad:1},
+{a:[4,6],t:'你学会了骑四轮小自行车。',once:1,good:1,e:{health:1}},
+{a:[4,6],t:'你偷偷吃了半罐糖,牙疼了一个星期。',once:1,e:{health:-1},bad:1},
+{a:[4,6],t:'你报了钢琴班,每天被逼着练琴。',once:1,c:{wealth:5},e:{intel:1}},
+{a:[4,6],t:'你在商场的电梯上跑丢了一会儿,把爸妈急坏了。',once:1},
+{a:[4,6],t:'你学会了写自己的名字。',once:1,good:1,e:{intel:1}},
+{a:[4,6],t:'你被选去当幼儿园活动的领唱。',once:1,c:{charm:6},good:1,e:{charm:1}},
+{a:[4,6],t:'家里搬了一次家,你换了个新环境。',once:1},
+// ===== 7-12 小学 =====
+{a:[7,12],t:'你上小学了。',once:1},
+{a:[7,12],t:'班主任在班里念了你的作文当范文。',once:1,c:{intel:6},good:1,e:{intel:1}},
+{a:[7,12],t:'你期末考试考了班里倒数第五。',once:1,c:{intel:4},bad:1},
+{a:[7,12],t:'你被同学起了个外号,气得不行。',once:1,bad:1},
+{a:[7,12],t:'你当上了班里的体育委员。',once:1,c:{health:6},good:1,e:{health:1}},
+{a:[7,12],t:'你被高年级的同学堵在楼梯口要钱。',once:1,bad:1,e:{health:-1}},
+{a:[7,12],t:'你在校运会上拿了一块银牌。',once:1,c:{health:5},good:1,e:{health:1}},
+{a:[7,12],t:'你偷偷看小说被老师没收了。',once:1},
+{a:[7,12],t:'你家里养了一只小狗,你天天带它出门。',once:1,good:1},
+{a:[7,12],t:'你报了奥数班,每周末都要去上课。',once:1,c:{wealth:5},e:{intel:2}},
+{a:[7,12],t:'你在学校门口的小卖部赊了账,被家长知道了。',once:1,bad:1},
+{a:[7,12],t:'你学会了游泳。',once:1,good:1,e:{health:1}},
+{a:[7,12],t:'暑假你被送去了外公外婆家,疯玩了一整个假期。',once:1,good:1},
+{a:[7,12],t:'你近视了,戴上了人生第一副眼镜。',once:1,e:{charm:-1, intel:1}},
+{a:[7,12],t:'你暗恋班里的一个同学,但从来没敢说话。',once:1},
+{a:[7,12],t:'你参加了学校的合唱团。',once:1,c:{charm:5},good:1},
+{a:[7,12],t:'你偷偷拿了家里的钱去买游戏卡。',once:1,c:{wealth:4},bad:1},
+{a:[7,12],t:'你加入了学校的学习小组,成绩涨了不少。',once:1,good:1,e:{intel:1}},
+{a:[7,12],t:'你在放学路上捡到一只流浪猫,带回了家。',once:1,good:1},
+{a:[7,12],t:'你被老师叫了家长。',once:1,bad:1},
+{a:[7,12],t:'你转学了,新学校一个熟人都没有。',once:1},
+{a:[7,12],t:'你被评为三好学生。',once:1,c:{intel:7},good:1,e:{intel:1}},
+{a:[7,12],t:'你打篮球扭伤了脚踝。',once:1,e:{health:-1},bad:1},
+{a:[7,12],t:'你开始学一门乐器。',once:1,c:{wealth:6},e:{intel:1}},
+{a:[7,12],t:'你参加夏令营,第一次离家过夜。',once:1,c:{wealth:5},good:1},
+{a:[7,12],t:'你在班里被起了「书呆子」的称号。',once:1,c:{intel:8},e:{charm:-1}},
+{a:[7,12],t:'你被选去参加朗诵比赛,站上台腿直抖。',once:1,c:{charm:5},good:1},
+{a:[7,12],t:'你捡到一块钱,交给了老师,被表扬了。',once:1,good:1},
+{a:[8,12],t:'你迷上了漫画,上课偷偷看被没收。',once:1},
+{a:[8,12],t:'你在班里当上了小组长。',once:1,c:{intel:5},good:1},
+// ===== 13-18 中学 =====
+{a:[13,15],t:'你进入了青春期,脸上开始冒痘。',once:1,e:{charm:-1}},
+{a:[13,18],t:'你第一次月考考进了年级前十。',once:1,c:{intel:7},good:1,e:{intel:1}},
+{a:[13,18],t:'你翘课去网吧通宵打游戏。',once:1,bad:1,e:{health:-1, intel:-1}},
+{a:[13,18],t:'你早恋了,被班主任叫到办公室谈话。',once:1},
+{a:[13,18],t:'你和人打了一架,眼睛被打肿了。',once:1,e:{health:-1},bad:1},
+{a:[13,18],t:'你偷偷学了吉他,在校园艺术节上唱了一首歌。',once:1,c:{charm:6},good:1,e:{charm:1}},
+{a:[13,18],t:'你被选进了校篮球队。',once:1,c:{health:7},good:1,e:{health:1}},
+{a:[13,18],t:'你因为长得好看,被隔壁班的人写进了情书里。',once:1,c:{charm:8},good:1},
+{a:[13,18],t:'你熬夜刷题到凌晨两点,第二天上课睡着了。',once:1,e:{intel:1, health:-1}},
+{a:[13,18],t:'你被同学孤立了整整一个学期。',once:1,bad:1},
+{a:[13,18],t:'你参加了数学竞赛,拿了省二等奖。',once:1,c:{intel:8},good:1,e:{intel:2}},
+{a:[13,18],t:'你偷偷喜欢上了自己的同桌。',once:1},
+{a:[13,18],t:'你的父母吵了一架,吵得很凶。',once:1,bad:1},
+{a:[13,18],t:'你开始偷偷抽烟,被家里人发现了。',once:1,bad:1,e:{health:-1}},
+{a:[13,18],t:'你学会了做饭。',once:1,good:1,e:{health:1}},
+{a:[13,18],t:'你在体育课上把胳膊摔断了。',once:1,e:{health:-1},bad:1},
+{a:[13,18],t:'你被老师说「这孩子将来没出息」。',once:1,c:{intel:4},bad:1},
+{a:[13,18],t:'你参加了一次演讲比赛,拿到了名次。',once:1,c:{charm:6},good:1,e:{charm:1}},
+{a:[15,18],t:'高考来了。你考得不错。',once:1,c:{intel:7},good:1},
+{a:[15,18],t:'高考来了。你考砸了。',once:1,c:{intel:4},bad:1},
+{a:[15,18],t:'你艺考过了,拿到了专业合格证。',once:1,c:{charm:8},good:1},
+{a:[15,18],t:'你以体育特长生的身份进了大学。',once:1,c:{health:8},good:1},
+{a:[15,18],t:'你高三那年生了一场大病,休学了半年。',once:1,e:{health:-1},bad:1},
+{a:[15,18],t:'你决定不念了,出去打工。',once:1,c:{wealth:3}},
+{a:[13,18],t:'你晚自习偷偷听歌,耳机被班主任摘了。',once:1},
+{a:[13,18],t:'你交到了一个能说心里话的朋友。',once:1,good:1},
+{a:[14,18],t:'你熬夜追完了整季的剧,第二天上课睡了一整天。',once:1,e:{health:-1}},
+{a:[14,18],t:'你进了学校的辩论队。',once:1,c:{intel:7},good:1,e:{intel:1}},
+{a:[16,18],t:'你在毕业照上笑得很傻,被同学笑了很多年。',once:1},
+// ===== 19-25 青年 =====
+{a:[19,22],t:'你上了大学,第一次离开家独自生活。',once:1,good:1},
+{a:[19,22],t:'你加了三个社团,忙得脚不沾地。',once:1},
+{a:[19,22],t:'你一学期逃了一半的课。',once:1,e:{intel:-1},bad:1},
+{a:[19,22],t:'你挂了两门课,补考费交了一笔。',once:1,bad:1},
+{a:[19,22],t:'你谈了一场恋爱,觉得整个世界都是甜的。',once:1,good:1,e:{charm:1}},
+{a:[19,22],t:'你被分手了,在宿舍躺了三天。',once:1,bad:1},
+{a:[19,22],t:'你拿了国家奖学金。',once:1,c:{intel:8},good:1,e:{intel:1}},
+{a:[19,22],t:'你开始兼职做家教,赚到了第一笔钱。',once:1,c:{intel:7},good:1,e:{wealth:1}},
+{a:[19,22],t:'你被网络上的兼职骗了钱。',once:1,bad:1,e:{wealth:-1}},
+{a:[19,22],t:'你开始健身,半年练出了线条。',once:1,c:{health:6},good:1,e:{charm:2, health:1}},
+{a:[19,22],t:'你去做了志愿活动。',once:1,good:1},
+{a:[19,22],t:'你参加了创业比赛,拿了个鼓励奖。',once:1},
+{a:[19,25],t:'你顺利毕业了。',once:1,c:{intel:6},good:1},
+{a:[19,25],t:'你毕业即失业,在家待了半年。',once:1,c:{intel:4},bad:1},
+{a:[19,25],t:'你考上了研究生。',once:1,c:{intel:8},good:1,e:{intel:2}},
+{a:[19,25],t:'你考公成功,进了体制内。',once:1,c:{intel:7},good:1,e:{wealth:1}},
+{a:[19,25],t:'你出国留学了。',once:1,c:{wealth:8},good:1,e:{intel:2}},
+{a:[19,25],t:'你去了大城市,住进了合租房。',once:1},
+{a:[19,25],t:'你第一次坐飞机,是去出差。',once:1,good:1},
+{a:[19,25],t:'你被公司以「试用期不合格」辞退了。',once:1,bad:1},
+{a:[19,24],t:'你和室友通宵开黑,天亮才睡。',once:1,e:{health:-1}},
+{a:[19,25],t:'你在图书馆泡了一整个学期,绩点拉满。',once:1,c:{intel:6},good:1,e:{intel:1}},
+{a:[19,25],t:'你第一次一个人去了很远的地方。',once:1,good:1},
+{a:[20,26],t:'你养成了跑步的习惯。',once:1,good:1,e:{health:1}},
+{a:[20,26],t:'你去做了几次志愿者,累,但心里挺热乎。',once:1,good:1},
+// ===== 26-35 成年 =====
+{a:[26,35],t:'你开始了每天加班到十点的生活。',once:1,e:{health:-1, wealth:1}},
+{a:[26,35],t:'你升职了,工资涨了一截。',once:1,c:{intel:7},good:1,e:{wealth:2}},
+{a:[26,35],t:'你跳槽到了一家更好的公司。',once:1,c:{intel:6},good:1,e:{wealth:1}},
+{a:[26,35],t:'你被公司优化了,拿到了 N+1。',once:1,bad:1,e:{wealth:1}},
+{a:[26,35],t:'你结婚了,办了一场热闹的婚礼。',once:1,c:{charm:5},good:1},
+{a:[26,35],t:'你结婚了,是相亲认识的,谈不上多喜欢。',once:1,c:{wealth:5}},
+{a:[26,35],t:'你攒够了首付,买了一套房。',once:1,c:{wealth:7},good:1,e:{wealth:-2}},
+{a:[26,35],t:'你背上三十年房贷,每个月还完款卡里只剩三位数。',once:1,c:{wealth:5},e:{health:-1}},
+{a:[26,35],t:'你有了孩子。',once:1,c:{wealth:5},good:1},
+{a:[26,35],t:'你创业了,开了家小店。',once:1,good:1},
+{a:[26,35],t:'你创业失败,亏光了积蓄。',once:1,bad:1,e:{wealth:-3}},
+{a:[26,35],t:'你买彩票中了五百万。',once:1,p:.03,e:{wealth:8},good:1},
+{a:[26,35],t:'你炒股亏了一半本金。',once:1,c:{wealth:6},bad:1,e:{wealth:-3}},
+{a:[26,35],t:'你买了人生第一辆车。',once:1,c:{wealth:6},good:1},
+{a:[26,35],t:'你和爱人因为钱的事大吵了一架。',once:1,bad:1},
+{a:[26,35],t:'你去了趟海边旅行,把手机扔在酒店躺了三天。',once:1,good:1,e:{health:1}},
+{a:[26,35],t:'你开始养猫,家里多了个成员。',once:1,good:1},
+{a:[26,35],t:'你体检查出了脂肪肝。',once:1,e:{health:-1},bad:1},
+{a:[26,35],t:'你被领导当众骂了一顿,回家路上哭了一路。',once:1,bad:1},
+{a:[26,35],t:'你利用业余时间做了个副业,居然赚到钱了。',once:1,c:{intel:7},good:1,e:{wealth:2}},
+{a:[26,35],t:'你熬夜熬出了高血压。',once:1,e:{health:-1},bad:1},
+{a:[26,35],t:'你离婚了。',once:1,bad:1},
+{a:[26,35],t:'你父母催婚催得很凶。',once:1},
+{a:[26,35],t:'你给爸妈换了一套大房子。',once:1,c:{wealth:9},good:1},
+{a:[26,40],t:'你换了份更累但工资更高的工作。',once:1,e:{wealth:2, health:-1}},
+{a:[26,40],t:'你学会拒绝别人了,整个人轻松不少。',once:1,good:1},
+{a:[26,40],t:'你把家里重新装修了一遍。',once:1,c:{wealth:7},good:1},
+{a:[28,45],t:'你带着伴侣出去旅行了一趟。',once:1,c:{wealth:5},good:1},
+{a:[30,50],t:'你体检各项指标都正常,医生说你这身体还行。',once:1,good:1,e:{health:1}},
+{a:[30,50],t:'你拿到了一笔意料之外的奖金。',once:1,good:1,e:{wealth:1}},
+{a:[30,55],t:'你被人在背后告了一状,吃了个哑巴亏。',once:1,bad:1},
+// ===== 36-55 中年 =====
+{a:[36,55],t:'你开始发福,去年的裤子穿不上了。',once:1,e:{charm:-1}},
+{a:[36,55],t:'体检报告上多了好几个箭头。',once:1,e:{health:-1},bad:1},
+{a:[36,55],t:'你的事业到了瓶颈,每天上班像上坟。',once:1,bad:1},
+{a:[36,55],t:'你被提拔成了部门负责人。',once:1,c:{intel:8},good:1,e:{wealth:2}},
+{a:[36,55],t:'你的孩子考上了重点大学。',once:1,c:{wealth:5},good:1},
+{a:[36,55],t:'你的父亲生了一场大病,你请了长假照顾。',once:1,bad:1,e:{wealth:-1}},
+{a:[36,55],t:'你开始每天早起打太极。',once:1,good:1,e:{health:1}},
+{a:[36,55],t:'你把闲钱投进了基金,结果套牢了。',once:1,c:{wealth:6},e:{wealth:-2},bad:1},
+{a:[36,55],t:'你重新捡起了年轻时的爱好,弹琴写字。',once:1,good:1},
+{a:[36,55],t:'你被公司裁掉了,这次没有再找到合适的工作。',once:1,bad:1,e:{wealth:-1}},
+{a:[36,55],t:'你带着全家去了一趟国外。',once:1,c:{wealth:9},good:1},
+{a:[36,55],t:'你和伴侣的感情越来越淡,两个人吃饭都不说话。',once:1,bad:1},
+{a:[36,55],t:'你第二次创业,这次做成了。',once:1,c:{intel:8},good:1,e:{wealth:4}},
+{a:[36,55],t:'你学会了游泳,每周去三次。',once:1,good:1,e:{health:1}},
+{a:[36,55],t:'你被查出了甲状腺结节,医生说先观察。',once:1,bad:1},
+{a:[36,55],t:'你搬进了更大的房子,背上了更重的贷款。',once:1,c:{wealth:7},e:{wealth:-2}},
+{a:[36,55],t:'你开始每天接送孩子上下学。',once:1,c:{wealth:5}},
+{a:[36,55],t:'你的老朋友借了你一笔钱,再也没还。',once:1,bad:1,e:{wealth:-2}},
+{a:[36,55],t:'你养成了每天散步一小时的习惯。',once:1,good:1,e:{health:1}},
+{a:[36,55],t:'你报名参加了一次马拉松,虽然跑了最后一名。',once:1,c:{health:6},good:1,e:{health:1}},
+{a:[36,55],t:'你开始掉头发,发际线肉眼可见地后移。',once:1,e:{charm:-1}},
+{a:[36,55],t:'你开始学着跟父母好好说话。',once:1,good:1},
+{a:[40,58],t:'你去参加了同学会,听说有人已经不在了。',once:1,bad:1},
+{a:[40,58],t:'你把烟戒了。',once:1,good:1,e:{health:1}},
+{a:[42,58],t:'你陪孩子熬夜做题,自己也重新学了一遍。',once:1,good:1,e:{intel:1}},
+// ===== 56+ 老年 =====
+{a:[56,99],t:'你退休了,终于可以睡到自然醒。',once:1,c:{wealth:6},good:1},
+{a:[56,99],t:'你加入了小区的广场舞队。',once:1,good:1,e:{health:1}},
+{a:[56,99],t:'你抱上了孙子/孙女。',once:1,good:1},
+{a:[56,99],t:'你开始吃降压药,一天都不能停。',once:1,e:{health:-1}},
+{a:[56,99],t:'你在家里摔了一跤,髋骨骨裂。',once:1,e:{health:-1},bad:1},
+{a:[56,99],t:'一位老友走了,你去参加了葬礼。',once:1,bad:1},
+{a:[56,99],t:'你开始学着写毛笔字。',once:1,good:1},
+{a:[56,99],t:'你住了一次院,做了一个小手术。',once:1,e:{health:-1},bad:1},
+{a:[56,99],t:'你开始每天早上六点去菜市场买菜。',once:1},
+{a:[56,99],t:'你和老伴一起去看了趟海。',once:1,good:1},
+{a:[56,99],t:'你开始记不住事情,常常忘了钥匙放哪。',once:1,e:{intel:-1}},
+{a:[56,99],t:'你把攒了一辈子的钱留给了孩子。',once:1,good:1},
+{a:[56,99],t:'你在公园里认识了一群棋友,天天下午对战。',once:1,good:1,e:{intel:1}},
+{a:[56,99],t:'你上了老年大学,重新背起了英语单词。',once:1,good:1,e:{intel:1}},
+{a:[56,99],t:'你养了一只狗,晚饭后遛它成了每天最期待的事。',once:1,good:1},
+{a:[58,99],t:'你每天固定时间去公园走两圈。',once:1,good:1,e:{health:1}},
+{a:[60,99],t:'你开始写回忆录,写了两页就写不动了。',once:1},
+{a:[60,99],t:'老同事约你喝茶,你们聊了一下午。',once:1,good:1},
+{a:[60,99],t:'你坐在阳台上晒太阳,一坐就是一下午。',once:1},
+{a:[65,99],t:'你学会了用手机拍视频,拍给孙子看。',once:1,good:1},
+{a:[65,99],t:'你早上醒来,忽然想不起今天是星期几。',once:1},
+// ===== 全年龄随机 =====
+{a:[5,90],t:'你捡到了一笔钱,交给了警察叔叔。',p:.02,good:1},
+{a:[8,80],t:'你吃了顿不干净的外卖,拉了两天肚子。',p:.05,e:{health:-1},bad:1},
+{a:[10,80],t:'你生了场大病,住院半个月。',p:.04,e:{health:-1},bad:1},
+{a:[16,80],t:'你出了场车祸,万幸只是皮外伤。',p:.025,e:{health:-1},bad:1},
+{a:[16,80],t:'你遇到了一个愿意帮你的人,少走了很多弯路。',p:.05,good:1,e:{wealth:1}},
+{a:[18,70],t:'你被雷劈了,居然活了下来。',p:.004,e:{health:-2},bad:1},
+{a:[20,70],t:'你中了公司年会的特等奖,一台冰箱。',p:.03,good:1},
+{a:[12,80],t:'你在路边扶起了一位摔倒的老人,被家属感谢。',p:.04,good:1},
+{a:[20,75],t:'你的手机被偷了。',p:.04,e:{wealth:-1},bad:1},
+{a:[6,85],t:'你梦到自己变成了一只鸟,醒来发了半天呆。',p:.05},
+{a:[30,80],t:'你养了十几年的老猫走了。',p:.03,bad:1},
+{a:[18,60],t:'你在网上写的帖子突然火了。',p:.02,good:1,e:{charm:1}},
+{a:[16,70],t:'你独自去了一趟很远的地方旅行。',p:.04,good:1,e:{health:1}},
+{a:[20,70],t:'你花了半年时间自学了一门手艺。',p:.04,good:1,e:{intel:1}},
+{a:[25,70],t:'你借出去的钱要了三年才要回来。',p:.03,bad:1},
+// ===== 危险/稀有 =====
+{a:[30,90],t:'你查出了重病,不得不住院治疗。',p:.012,e:{health:-2},bad:1},
+{a:[40,95],t:'你的身体彻底垮了。',p:.008,e:{health:-3},bad:1},
+{a:[60,99],t:'你在睡梦中安详地离开了。',p:.02,die:1,dr:'寿终正寝'},
+{a:[0,3],t:'你突发急病,没能抢救过来。',p:.015,die:1,dr:'急病'},
+{a:[12,40],t:'意外发生了,你没能挺过去。',p:.012,die:1,dr:'意外'}
+];
+
+/* ---------- 日常琐事 ----------
+   哪一年没轮到"人生大事",就从这里挑一条顶上,免得整年空白一片。
+   这里的事件可以反复出现。 */
+const DAILY = [
+  {t:'你梦见了小时候住的房子。'},
+  {t:'你在路边遇到一只不怕人的猫,蹲下来撸了半天。', good:1},
+  {t:'你刷手机刷到凌晨两点,第二天顶着黑眼圈。', e:{health:-1}, bad:1, a:[10,99]},
+  {t:'你翻出了很久以前的照片,看了半天。'},
+  {t:'你学会了一道新菜,做给家里人吃。', good:1, a:[8,99]},
+  {t:'你跟朋友吃了顿烧烤,聊到半夜。', good:1, a:[12,99]},
+  {t:'你在网上跟人吵了一架,气了一整天。', bad:1, a:[10,99]},
+  {t:'你养的文竹冒出了新芽。', good:1},
+  {t:'你接到一个陌生号码的电话,是推销。'},
+  {t:'你把房间彻底收拾了一遍,心情舒畅。', good:1},
+  {t:'你淋了一场雨,回家连打了好几个喷嚏。', e:{health:-1}},
+  {t:'你读完一本好书,记了半本笔记。', e:{intel:1}, good:1},
+  {t:'你失眠了一整晚,天亮才睡着。', e:{health:-1}, bad:1, a:[8,99]},
+  {t:'你去看了一场电影,散场时天已经黑了。', good:1},
+  {t:'你买了一件惦记很久的东西。', good:1},
+  {t:'你翻来覆去想了一件很多年前的事。'},
+  {t:'你去参加了同学聚会,发现大家变化都很大。', a:[20,99]},
+  {t:'你养的绿萝被浇多了水,烂了根。', bad:1},
+  {t:'你一个人去看了场演出。', good:1},
+  {t:'你翻出旧日记,看了很久。'},
+  {t:'你在楼下买了个煎饼果子当早饭。'},
+  {t:'你把攒了很久没用上的东西清了一箱,屋子敞亮不少。', good:1},
+  {t:'你在电梯里跟邻居点了个头,谁也没说话。'},
+  {t:'你半夜醒来,听了会儿窗外的雨声。'},
+  {t:'你换了张手机壁纸,看着挺顺眼。'},
+  {t:'你想起一个很久没联系的人,想了想,还是没打那个电话。'},
+  {t:'你在超市买了一大袋零食,回家一口气吃了半袋。', e:{health:-1}},
+  {t:'你看了场球赛,主队输了。', bad:1, a:[8,99]},
+  {t:'你在阳台上站了会儿,看了会儿天。'},
+  {t:'你把不穿的旧衣服整理出来,拿去捐了。', good:1, a:[8,99]},
+  {t:'你在楼下碰到邻居,站着聊了二十分钟。'},
+  {t:'你把手机相册翻到了三年前,看了很久。'},
+  {t:'你买了束花插在窗台上。没人送,就是自己想买。'},
+  {t:'你为了减肥办了张健身卡,一年只去了三次。', e:{wealth:-1}, a:[16,99]},
+  {t:'你一整天没出门,把一部剧追完了。', a:[12,99]},
+  {t:'你半夜饿了,起来给自己煮了碗泡面。', a:[12,99]},
+  {t:'你把旧手机翻出来充电,里面全是以前的照片。'},
+  {t:'你在公园的长椅上坐了很久,看别人遛狗。'},
+  {t:'你换了种洗发水,头发好像掉得少了点。', e:{charm:1}, a:[20,99]},
+  {t:'下楼时你顺手把楼道的垃圾带下去了。', good:1, a:[10,99]},
+  {t:'楼上装修吵了一整天,你头疼。', e:{health:-1}, bad:1, a:[12,99]},
+  {t:'你翻出小时候的玩具,坐在地上玩了半天。'},
+  {t:'这一年什么都没发生,平平淡淡。'}
+];
+
+/* 0-3 岁专用:小婴儿的日常,免得开头几年空着 */
+const BABY_DAILY = [
+  {t:'你大部分时间都在睡觉。'},
+  {t:'你学会了用奶瓶自己喝奶。'},
+  {t:'你长出了第一颗牙,见什么都想咬。'},
+  {t:'你被抱着去楼下晒了晒太阳。'},
+  {t:'你抓着大人的手指不肯松开。'},
+  {t:'你学会了拍手,一拍就笑。'},
+  {t:'你把玩具扔到地上,看大人一次次捡。'},
+  {t:'你半夜醒了,自己玩了会儿,又睡了过去。'}
+];
+
+/* =========================================================
+   人生抉择:到点会停下来让你拿主意。
+   选项能不能点,直接取决于你开局怎么加的属性 —— 这是加点的意义所在。
+   c = 需要的属性门槛;r = 选完的结果文本;e = 结果造成的属性变化
+   ========================================================= */
+const CHOICES = [
+  { a:[5,7],
+    q:'家里问你要不要报个兴趣班,你想?',
+    opts:[
+      { t:'去!我想学', c:{wealth:4}, r:'你被塞进了兴趣班,一学就是好几年。', e:{intel:2, wealth:-1}, good:1 },
+      { t:'不去,我要在楼下玩', r:'你的童年全是在楼下疯跑里过的,晒得黢黑。', e:{health:1, charm:-1} }
+    ]},
+  { a:[9,11],
+    q:'班里总有个人找你麻烦,你打算怎么办?',
+    opts:[
+      { t:'打回去,一次打服他', c:{health:6}, r:'你跟他狠狠打了一架,两败俱伤。但从那以后,再没人敢惹你。', e:{health:-1, charm:1}, good:1 },
+      { t:'告诉老师和家长', r:'老师批评了他。可转头他又来了,还叫你"告状的"。', e:{charm:-1}, bad:1 },
+      { t:'忍了,以后躲着走', r:'你学会了绕着走,也学会了不说话。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[13,15],
+    q:'你好像喜欢上了一个人,整晚睡不着。',
+    opts:[
+      { t:'鼓起勇气去表白', c:{charm:7}, r:'你表白了!对方红着脸点了头。那个夏天你们一起走了很多路。', e:{charm:1}, good:1 },
+      { t:'算了,还是念书要紧', r:'你把心思收了回来,月考名次往前挪了一大截。', e:{intel:2} },
+      { t:'藏在心里,谁也不说', r:'你把这件事写进了日记,一写就是三年。', e:{} }
+    ]},
+  { a:[17,18],
+    q:'高考志愿表摊在面前,你怎么填?',
+    opts:[
+      { t:'冲一把,报最好的学校', c:{intel:8}, r:'你被一所顶尖大学录取了,全家都愣住了。', e:{intel:2, wealth:1}, good:1 },
+      { t:'稳一点,报个把握大的', r:'你去了一所不好不坏的学校,四年过得挺舒服。', e:{intel:1} },
+      { t:'不念了,出去闯', r:'你南下打工,头一年就见识了生活真正的样子。', e:{wealth:1, health:-1}, bad:1 }
+    ]},
+  { a:[21,22],
+    q:'毕业了,接下来打算干嘛?',
+    opts:[
+      { t:'接着念,考研', c:{intel:6}, r:'你考上了研究生,在学校里又待了三年。', e:{intel:2, wealth:-1} },
+      { t:'找份工作,先赚钱', r:'你入职了一家普通公司,开始了上班族的日子。', e:{wealth:1} },
+      { t:'考公,图个安稳', c:{intel:6}, r:'你考上了编制,从此端上了铁饭碗。', e:{wealth:1, health:1}, good:1 },
+      { t:'自己创业', c:{wealth:7}, r:'你拿着家里的钱开了家公司,每天睁眼就是房租和工资。', e:{wealth:2, health:-1} }
+    ]},
+  { a:[24,26],
+    q:'留在大城市,还是回老家?',
+    opts:[
+      { t:'留在大城市拼', r:'你留了下来,每天挤地铁,也每天看见不一样的活法。', e:{wealth:2, health:-1} },
+      { t:'回老家,图个安稳', r:'你回了老家。父母松了口气,你偶尔还是会想起那座城市。', e:{health:1, wealth:-1} }
+    ]},
+  { a:[26,28],
+    q:'谈了好几年,对方问你要不要结婚。',
+    opts:[
+      { t:'结!就现在', c:{wealth:5}, r:'你们办了场热热闹闹的婚礼,也欠下了一堆人情。', e:{wealth:-1, health:1}, good:1 },
+      { t:'再等等,先搞事业', r:'你说再等等。对方没说话。后来你们就慢慢淡了。', e:{wealth:1, charm:-1}, bad:1 }
+    ]},
+  { a:[28,32],
+    q:'中介天天给你打电话,说再不上车就晚了。',
+    opts:[
+      { t:'掏空积蓄,买', c:{wealth:7}, r:'你签了三十年的贷款。拿到钥匙那天,你在楼下坐了很久。', e:{wealth:-2, health:-1} },
+      { t:'不买,接着租', r:'你选择了租房。压力小了不少,但心里总觉得自己在漂着。', e:{wealth:1, charm:-1} }
+    ]},
+  { a:[32,35],
+    q:'有家公司来挖你,给的钱多一倍。',
+    opts:[
+      { t:'跳!', c:{intel:6}, r:'你跳了槽,工资涨了,加班也跟着涨。', e:{wealth:2, health:-1} },
+      { t:'不跳,在这待着挺好', r:'你留了下来,同事都说你这人稳。', e:{health:1} }
+    ]},
+  { a:[36,40],
+    q:'体检报告上多了几个箭头,医生让你复查。',
+    opts:[
+      { t:'认真治,该查就查', c:{wealth:5}, r:'你花了不少钱,但把问题按住了。', e:{health:2, wealth:-1}, good:1 },
+      { t:'先拖拖,应该没事', r:'你没当回事。两年后它又找上来了。', e:{health:-2}, bad:1 }
+    ]},
+  { a:[40,44],
+    q:'老同学找你,说有个稳赚的项目,投不投?',
+    opts:[
+      { t:'投一笔,机会难得', c:{wealth:7}, r:'你把积蓄投了进去,从此天天盯着手机看曲线。', e:{wealth:-2} },
+      { t:'不投,我胆子小', r:'你婉拒了。两年后听说那个项目黄了,老板跑了。', e:{}, good:1 }
+    ]},
+  { a:[44,48],
+    q:'孩子成绩不太好,老师又把你叫去了学校。',
+    opts:[
+      { t:'砸钱补习,必须追上来', c:{wealth:7}, r:'你给孩子报了最贵的补习班。他的成绩确实上来了,人也瘦了。', e:{wealth:-2, intel:1} },
+      { t:'算了,顺其自然吧', r:'你想开了:孩子快快乐乐的,比分数重要。', e:{health:1} }
+    ]},
+  { a:[48,53],
+    q:'你越来越觉得,这辈子不该是这么活的。',
+    opts:[
+      { t:'辞职,去做想做的事', c:{wealth:8}, r:'你辞了职,去开了家小店。收入少了一半,但每天早上睁眼是笑着的。', e:{wealth:-2, health:1, charm:1}, good:1 },
+      { t:'算了,还是苟着吧', r:'你把那点冲动咽了回去,继续上班。', e:{wealth:1, health:-1} }
+    ]},
+  { a:[56,60],
+    q:'退休了,往后的日子你想怎么过?',
+    opts:[
+      { t:'带孙子,享天伦之乐', r:'你开始每天接送孙子上下学,比上班那会儿还忙。', e:{health:1} },
+      { t:'到处走走,看看世界', c:{wealth:6}, r:'你买了个相机,去了很多年轻时想去却没去成的地方。', e:{charm:1, health:1}, good:1 },
+      { t:'接着学点新东西', c:{intel:6}, r:'你报了老年大学,重新当起了学生。', e:{intel:2}, good:1 }
+    ]},
+  { a:[68,76],
+    q:'一场大病把你送进了医院,医生把话说得很明白。',
+    opts:[
+      { t:'全力治,我还想多活几年', c:{wealth:5}, r:'你扛过了这一关,虽然整个人元气大伤。', e:{health:1, wealth:-2} },
+      { t:'保守治疗吧,别折腾了', r:'你选择了少受点罪。', e:{health:-2}, bad:1 }
+    ]},
+  { a:[4,7], p:.75,
+    q:'幼儿园要选一个班长,老师问谁想当。',
+    opts:[
+      { t:'我举手了,声音最大', c:{charm:6}, r:'你当上了班长,从此有了"管人"的瘾。', e:{charm:2}, good:1 },
+      { t:'我想当,但没敢举手', r:'你眼看着别人当了班长,心里酸了好几天。', e:{charm:-1} }
+    ]},
+  { a:[4,7], p:.75,
+    q:'邻居家小孩抢了你的玩具,还推了你一把。',
+    opts:[
+      { t:'抢回来!', c:{health:5}, r:'你把玩具抢了回来,还把他推倒了。两家大人为此吵了一架。', e:{health:1, charm:-1} },
+      { t:'哭着找大人告状', r:'大人出面把玩具要了回来。你学会了"有事找大人"。' }
+    ]},
+  { a:[8,11], p:.7,
+    q:'放学路上,你在花坛边捡到一个钱包,里面厚厚一沓钱。',
+    opts:[
+      { t:'交给警察叔叔', r:'失主后来找到了学校,给你送了一面锦旗。', e:{charm:2}, good:1 },
+      { t:'拿回家交给爸妈', r:'爸妈带你把钱包送去了派出所,你得了一句"好孩子"。', e:{charm:1} },
+      { t:'偷偷留着', r:'你把钱藏进书桌抽屉,一连好几天都睡不好觉。', e:{wealth:1, charm:-1}, bad:1 }
+    ]},
+  { a:[8,12], p:.7,
+    q:'学校要办比赛,报名表发到了每个人手上。',
+    opts:[
+      { t:'报数学竞赛', c:{intel:7}, r:'你在竞赛里拿了名次,照片被贴上了光荣榜。', e:{intel:2}, good:1 },
+      { t:'报运动会', c:{health:7}, r:'你在运动会上拿了两块奖牌,挂在书包上晃了很久。', e:{health:2}, good:1 },
+      { t:'什么都不报,当观众', r:'你在台下看完了所有比赛,顺便写完了两本作业。', e:{intel:1} }
+    ]},
+  { a:[12,15], p:.7,
+    q:'同学拉你半夜翻墙去网吧,说新开那家机器特别快。',
+    opts:[
+      { t:'去!刺激', r:'你们玩到凌晨四点,翻墙回来时被保安逮了个正着。', e:{health:-1, intel:-1}, bad:1 },
+      { t:'不去,我要睡觉', r:'你留在了宿舍。第二天那几个人被通报批评,你逃过一劫。', e:{intel:1}, good:1 }
+    ]},
+  { a:[12,16], p:.7,
+    q:'班里有人丢了钱,有人指认是你拿的。',
+    opts:[
+      { t:'当场跟他吵,把事闹大', c:{charm:6}, r:'你据理力争。后来真凶自己露了馅,还了你清白。', e:{charm:1}, good:1 },
+      { t:'不吭声,忍下来', r:'你一句都没辩解。这件事像根刺,扎了很多年。', e:{charm:-2}, bad:1 }
+    ]},
+  { a:[16,18], p:.85,
+    q:'文理分科,你选哪一边?',
+    opts:[
+      { t:'理科,将来学工科', c:{intel:6}, r:'你选了理科,从此和公式、电路、实验打上了交道。', e:{intel:2} },
+      { t:'文科,我爱写东西', c:{intel:5}, r:'你选了文科,作文常常被老师当范文念。', e:{intel:1, charm:1} },
+      { t:'无所谓,跟着朋友选', r:'你跟着朋友选了理科,成绩一直不温不火。' }
+    ]},
+  { a:[16,18], p:.6,
+    q:'几个人拉你组乐队,说缺个主唱。',
+    opts:[
+      { t:'加入!', c:{charm:7}, r:'你们在校园艺术节上唱了一首,台下的尖叫声你记了一辈子。', e:{charm:2}, good:1 },
+      { t:'算了,影响学习', r:'你拒绝了。很多年以后,你偶尔还会想:要是当时去了呢?' }
+    ]},
+  { a:[19,22], p:.7,
+    q:'大学里有人追你,条件不错,你也谈不上讨厌。',
+    opts:[
+      { t:'试试看吧', c:{charm:5}, r:'你们在一起了一整年,后来因为毕业各奔东西而分开。', e:{charm:1} },
+      { t:'不了,我想先顾自己', r:'你把精力都放在自己身上,一个人过了很充实的几年。', e:{intel:1} }
+    ]},
+  { a:[19,23], p:.7,
+    q:'社团和学生会在招人,你手上只有一份报名表。',
+    opts:[
+      { t:'去学生会,锻炼能力', c:{intel:6}, r:'你在学生会一路做到部长,学会了怎么跟各种人打交道。', e:{charm:1, intel:1}, good:1 },
+      { t:'去社团,玩得开心', r:'你在社团认识了一群臭味相投的人,玩得很尽兴。', e:{charm:1} },
+      { t:'都不去,专心念书', r:'你泡了四年图书馆,成绩一直排在前面。', e:{intel:2} }
+    ]},
+  { a:[23,27], p:.7,
+    q:'一个很要好的朋友开口向你借钱,说急用。',
+    opts:[
+      { t:'借,二话不说', c:{wealth:5}, r:'你把钱借了出去。他说下个月就还,结果拖了三年。', e:{wealth:-2, charm:1} },
+      { t:'借一点,意思意思', r:'你借了一小笔。钱是没了,但朋友还在。', e:{wealth:-1} },
+      { t:'不借,直接拒绝', r:'你拒绝了。他脸色不太好看,后来联系越来越少。', e:{charm:-1, wealth:1} }
+    ]},
+  { a:[24,29], p:.7,
+    q:'家里又安排了一场相亲。对方条件很好,可你没感觉。',
+    opts:[
+      { t:'试试看,感情可以培养', c:{wealth:5}, r:'你们处了半年,居然还挺合得来。', e:{wealth:1, health:1} },
+      { t:'算了,我不想将就', r:'你婉拒了。父母叹了口气,没再逼你。', e:{charm:1} }
+    ]},
+  { a:[27,31], p:.75,
+    q:'两边家里都在问:什么时候要孩子?',
+    opts:[
+      { t:'要,趁年轻', c:{wealth:6}, r:'孩子出生那天,你在产房外的长椅上坐了一整夜。', e:{wealth:-2, health:-1}, good:1 },
+      { t:'再等两年,先把事业稳住', r:'你们决定再等等。这个"再等等",一等就是好几年。', e:{wealth:1} }
+    ]},
+  { a:[31,36], p:.7,
+    q:'同事下班后搞副业,一个月顶你半个月工资,问你要不要一起。',
+    opts:[
+      { t:'搞!下班后也是我自己的时间', c:{health:6}, r:'你白天上班晚上干活。半年后,副业收入超过了主业。', e:{wealth:3, health:-2}, good:1 },
+      { t:'不搞,我下班只想躺着', r:'你按时下班,日子过得轻松,就是钱包鼓得慢。', e:{health:1} }
+    ]},
+  { a:[36,42], p:.75,
+    q:'半夜接到电话:你母亲住院了。',
+    opts:[
+      { t:'请假回去,全程陪着', c:{wealth:5}, r:'你请了长假守在床边。母亲出院那天,拉着你的手说了很久的话。', e:{wealth:-1, health:1}, good:1 },
+      { t:'请不了假,只能多打点钱回去', r:'你转了钱回去,人坐在工位上,心一直悬着。', e:{wealth:-1, charm:-1}, bad:1 }
+    ]},
+  { a:[41,46], p:.6,
+    q:'家里人问:要不要再要一个孩子?',
+    opts:[
+      { t:'要,家里热闹', c:{wealth:7}, r:'家里又添了个孩子。热闹是真热闹,累也是真累。', e:{wealth:-3, health:-1} },
+      { t:'不要了,一个就够', r:'你们决定不再要了。日子安安稳稳地往下过。', e:{wealth:1} }
+    ]},
+  { a:[46,52], p:.7,
+    q:'你干了二十年的行业在往下走,有朋友劝你趁早转行。',
+    opts:[
+      { t:'转!不能在一棵树上吊死', c:{intel:7}, r:'你从零开始学新东西,疼了两年,终于重新站稳了。', e:{intel:2, wealth:1}, good:1 },
+      { t:'不转,熬到退休算了', r:'你留在了原地。行业一天不如一天,你也一天比一天沉默。', e:{wealth:-1, charm:-1} }
+    ]},
+  { a:[51,57], p:.6,
+    q:'多年不联系的老同学突然找你,说生意周转不开。',
+    opts:[
+      { t:'借,老交情了', c:{wealth:6}, r:'你借了。后来听说他生意早就黄了,人也找不到了。', e:{wealth:-2}, bad:1 },
+      { t:'不借,我也有我的难处', r:'你委婉拒绝了。心里有点过意不去,但守住了自己的钱。', e:{wealth:1} }
+    ]},
+  { a:[56,62], p:.7,
+    q:'孩子忙得脚不沾地,问你能不能帮着带孙子。',
+    opts:[
+      { t:'带!反正我也闲', r:'你开始了接送、做饭、哄睡的日子。身体累,心里满。', e:{health:-1, charm:1} },
+      { t:'我出钱,你们请人', c:{wealth:6}, r:'你掏钱请了阿姨。孩子轻松了,你也保住了自己的时间。', e:{wealth:-1, health:1} }
+    ]},
+  { a:[62,72], p:.7,
+    q:'几个孩子坐在一起,问起了你的房子和存款将来怎么安排。',
+    opts:[
+      { t:'趁现在说清楚,写下来', c:{intel:6}, r:'你把话摆在了明处,几个孩子都点了头。往后没起过争执。', e:{charm:1}, good:1 },
+      { t:'先不提,等我走了再说', r:'你说以后再说。这个话题,后来再没人敢提。', e:{health:-1} }
+    ]}
+];
+
+/* =========================================================
+   人生际遇:同一件事,因为你的属性不同,结果完全两样。
+   从上往下挑第一个满足条件的档位,最后一条不带 c 的是兜底。
+   ========================================================= */
+const TIERED = [
+  { a:[0,1],
+    tiers:[
+      { c:{health:8}, t:'你出生时哭声嘹亮,护士说这孩子底子好。', e:{health:1}, good:1 },
+      { c:{health:5}, t:'你出生时一切正常,是个普通的健康宝宝。' },
+      { t:'你出生时又瘦又小,在保温箱里待了好几天。', e:{health:-1}, bad:1 }
+    ]},
+  { a:[6,8],
+    tiers:[
+      { c:{intel:9}, t:'第一次考试你就考了全班第一,老师把卷子贴在了墙上。', e:{intel:1, charm:1}, good:1 },
+      { c:{intel:6}, t:'你考得不错,回家爸妈奖励了一顿好的。', e:{intel:1}, good:1 },
+      { c:{intel:3}, t:'你成绩中等,没人说什么。' },
+      { t:'你考了倒数,卷子藏在书包里没敢拿回家。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[7,10],
+    tiers:[
+      { c:{health:9}, t:'你跑步拿了第一,体育老师当场把你挑进了校队。', e:{health:2}, good:1 },
+      { c:{health:6}, t:'体育测试你各项都及格了,不算突出。' },
+      { t:'跑步你拿了最后一名,被同学笑了好半天。', e:{charm:-1, health:-1}, bad:1 }
+    ]},
+  { a:[8,12],
+    tiers:[
+      { c:{charm:9}, t:'班里排节目,大家一致推你当主角,你站上了舞台正中间。', e:{charm:2}, good:1 },
+      { c:{charm:6}, t:'你被选去演了个配角,好歹也算上了台。', e:{charm:1} },
+      { t:'没选上。你在台下鼓了三个小时掌。' }
+    ]},
+  { a:[9,12],
+    tiers:[
+      { c:{wealth:9}, t:'你爸开着车来接你,同学全趴在窗户上看。', e:{charm:1}, good:1 },
+      { c:{wealth:5}, t:'你家条件一般,不好也不坏。' },
+      { t:'填家庭情况表的时候,你把那一栏空着没写。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[10,14],
+    tiers:[
+      { c:{intel:8}, t:'老师课上点你回答问题,你站起来答得又快又准。', e:{intel:1}, good:1 },
+      { c:{intel:5}, t:'你磕磕巴巴答完了,坐下时长出一口气。' },
+      { t:'你站在那里一句话也说不出来,全班都看着你。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[13,15],
+    tiers:[
+      { c:{intel:9}, t:'月考你考进了年级前十,被调进了重点班。', e:{intel:2}, good:1 },
+      { c:{intel:6}, t:'你排在班里十几名,还有得追。', e:{intel:1} },
+      { t:'你又没及格,班主任把你叫去谈了话。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[13,17],
+    tiers:[
+      { c:{health:8}, t:'校运会长跑你拿了第一,冲线时全场都在喊你的名字。', e:{health:1, charm:2}, good:1 },
+      { c:{health:5}, t:'你报了两个项目,都没进前三。' },
+      { t:'你在看台上看完了整场,晒脱了一层皮。' }
+    ]},
+  { a:[14,18],
+    tiers:[
+      { c:{charm:8}, t:'课桌里出现了一张纸条,字写得很好看。你心里乱了一整个下午。', e:{charm:1}, good:1 },
+      { c:{charm:5}, t:'是同桌闹着玩写的,你笑着捶了他一拳。' },
+      { t:'纸条上抄的是一道数学题的答案。你想多了。' }
+    ]},
+  { a:[19,22],
+    tiers:[
+      { c:{intel:8}, t:'社团面试你侃侃而谈,当场就被部长要走了。', e:{intel:1, charm:1}, good:1 },
+      { c:{intel:5}, t:'你顺利进了社团,当了个普通干事。', e:{intel:1} },
+      { t:'面试官问了三个问题,你答上来半个。' }
+    ]},
+  { a:[21,25],
+    tiers:[
+      { c:{intel:7}, t:'第一次面试你答得滴水不漏,面试官当场说欢迎你来。', e:{wealth:2}, good:1 },
+      { c:{intel:4}, t:'你有点紧张,但最后还是拿到了 offer。', e:{wealth:1} },
+      { t:'你被刷了。回去的地铁上你想了很多。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[24,30],
+    tiers:[
+      { c:{charm:8}, t:'相亲对象见你第一面就笑了。后来你们又见了很多次。', e:{charm:1}, good:1 },
+      { c:{wealth:7}, t:'对方对你家的条件挺满意,你们聊得也还行。', e:{charm:1} },
+      { t:'两个人默默喝完咖啡,谁也没再联系谁。' }
+    ]},
+  { a:[26,35],
+    tiers:[
+      { c:{intel:8}, t:'你第一次向全公司汇报,讲完后会议室静了两秒,然后老板带头鼓掌。', e:{wealth:2, charm:1}, good:1 },
+      { c:{intel:5}, t:'你念完了整份 PPT,没什么人提问。', e:{wealth:1} },
+      { t:'你紧张得把一组数据念错了,被当众纠正。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[30,40],
+    tiers:[
+      { c:{health:8}, t:'年度体检,医生说你各项指标都不错,还夸你保养得好。', e:{health:1}, good:1 },
+      { c:{health:5}, t:'报告上有两个箭头,医生让你少吃点油腻的。', e:{health:-1} },
+      { t:'报告上问题不少,医生让你尽快复查。', e:{health:-2}, bad:1 }
+    ]},
+  { a:[35,45],
+    tiers:[
+      { c:{intel:9}, t:'公司开始裁人,你不但没事,还因为"不可替代"涨了薪。', e:{wealth:2}, good:1 },
+      { c:{intel:6}, t:'你安全过了这个冬天,只是年终奖打了折。' },
+      { t:'你被叫进了会议室。HR 的话说得很客气。', e:{wealth:-1}, bad:1 }
+    ]},
+  { a:[40,50],
+    tiers:[
+      { c:{wealth:8}, t:'孩子上了最好的学校,成绩也漂亮,你在家长会上很有面子。', e:{charm:1}, good:1 },
+      { c:{wealth:4}, t:'孩子成绩中上。你觉得这样挺好。' },
+      { t:'孩子成绩垫底,老师第三次找你谈话。', e:{charm:-1}, bad:1 }
+    ]},
+  { a:[45,55],
+    tiers:[
+      { c:{health:8}, t:'你还能一口气爬上六楼,同事都说你不像这个岁数的人。', e:{health:1}, good:1 },
+      { c:{health:5}, t:'你开始注意饮食,每年雷打不动去体检。' },
+      { t:'你住了一次院。出来之后,感觉整个人老了一截。', e:{health:-2}, bad:1 }
+    ]},
+  { a:[55,65],
+    tiers:[
+      { c:{wealth:8}, t:'你四处旅游,把年轻时想去的地方都走了一遍。', e:{health:1, charm:1}, good:1 },
+      { c:{wealth:5}, t:'退休金够花,日子过得安稳。' },
+      { t:'退休金不太够用,你又找了份零工补贴家用。', e:{health:-1, wealth:1} }
+    ]},
+  { a:[65,80],
+    tiers:[
+      { c:{health:7}, t:'你还能自己买菜做饭,上下楼梯不用人扶。', e:{health:1}, good:1 },
+      { c:{health:4}, t:'你有些慢性病,吃药控制着,问题不大。' },
+      { t:'这一年你住了两次院,身上插了不少管子。', e:{health:-2}, bad:1 }
+    ]},
+  { a:[70,90],
+    tiers:[
+      { c:{intel:8}, t:'你坐在窗前看书,一抬头天就黑了。心里很静。', e:{intel:1}, good:1 },
+      { c:{intel:4}, t:'你把老照片翻出来,一张一张看过去。' },
+      { t:'你想不起来昨天吃了什么。有些事越来越模糊了。', e:{intel:-1}, bad:1 }
+    ]}
+];
+
+/* =========================================================
+   以 下 是 「 开 挂 人 生 」 专 用 内 容
+   开挂也不是一条直线:这里既有爽文式的好事,也有翻车、被坑、空虚。
+   ========================================================= */
+
+/* ---------- 金手指:开局四选一 ---------- */
+const GOLDEN = [
+  { k:'rebirth', n:'重 生 者', d:'你带着上一世的记忆回来了。哪个路口有坑,你全知道。',
+    e:{intel:10, charm:4}, flag:'rebirth' },
+  { k:'system', n:'随 身 系 统', d:'叮!系统已绑定。每过十年,它会给你一次奖励。',
+    e:{intel:5, health:5}, flag:'system' },
+  { k:'money', n:'钞 能 力', d:'你家有矿,而且是金矿。钱在你眼里只是个数字。',
+    e:{wealth:28}, flag:'money' },
+  { k:'chosen', n:'天 选 之 人', d:'命运女神是你亲戚。四项全加,坏事自动绕着你走。',
+    e:{charm:8, intel:8, health:8, wealth:8}, flag:'chosen' }
+];
+
+/* ---------- 神力天赋 ---------- */
+const TALENTS_GOD = [
+  {n:'钞能力觉醒', r:4, d:'家境 +22', e:{wealth:22}},
+  {n:'过目不忘', r:4, d:'智力 +18', e:{intel:18}},
+  {n:'刀枪不入', r:4, d:'体质 +18', e:{health:18}},
+  {n:'倾国倾城', r:4, d:'颜值 +18', e:{charm:18}},
+  {n:'六边形战士', r:4, d:'四项各 +9', e:{charm:9, intel:9, health:9, wealth:9}},
+  {n:'不死之身', r:4, d:'死一次还能活过来', flag:'revive'},
+  {n:'锦鲤附体', r:4, d:'好事总是先找上你', flag:'lucky'},
+  {n:'长生不老', r:4, d:'寿命大幅延长,体质 +8', e:{health:8}, flag:'longlife'},
+  {n:'百毒不侵', r:3, d:'免疫小病小灾,体质 +10', e:{health:10}, flag:'tough'},
+  {n:'家中顶梁', r:3, d:'家境 +15,智力 +5', e:{wealth:15, intel:5}},
+  {n:'天才少年', r:3, d:'智力 +14,颜值 +4', e:{intel:14, charm:4}},
+  {n:'万人迷', r:3, d:'颜值 +14,家境 +4', e:{charm:14, wealth:4}},
+  {n:'铁人体质', r:3, d:'体质 +14,智力 +4', e:{health:14, intel:4}},
+  {n:'运气真好', r:3, d:'幸运提升,四项各 +4', e:{charm:4, intel:4, health:4, wealth:4}, flag:'lucky'},
+  {n:'再来一世', r:3, d:'死一次能复活,四项各 +5', e:{charm:5, intel:5, health:5, wealth:5}, flag:'revive'},
+  {n:'金手指本指', r:4, d:'四项各 +12', e:{charm:12, intel:12, health:12, wealth:12}}
+];
+
+/* ---------- 开挂事件库(有好有坏,不是一味往上走)---------- */
+const EVENTS_GOD = [
+// 0-6 岁
+{a:[0,0],t:'你出生那天医院正好停电,是靠手机手电筒照着接生的。',once:1},
+{a:[0,1],t:'你八个月就会叫人了,一开口叫的是"钱"。全家笑了半年。',once:1,good:1},
+{a:[1,4],t:'三岁的你能背下整本唐诗,当地电视台来家里采访过你。',once:1,good:1,e:{intel:2}},
+{a:[2,6],t:'家里给你请了三个家教,轮着来。',once:1,c:{wealth:20},e:{intel:2}},
+{a:[3,6],t:'你五岁那年画的画,被人出高价买走了。',once:1,good:1,e:{charm:2}},
+// 7-12 岁
+{a:[7,12],t:'你连跳两级,成了班里最小的那个。',once:1,c:{intel:12},good:1,e:{intel:3}},
+{a:[7,12],t:'你的作文拿了全国金奖,照片上了报纸。',once:1,good:1,e:{intel:2, charm:1}},
+{a:[7,12],t:'你在放学路上被星探拦住,拍了一支广告。',once:1,c:{charm:12},good:1,e:{charm:3, wealth:2}},
+{a:[8,12],t:'你爸顺手把整间书店买下来送给了你。',once:1,c:{wealth:25},good:1},
+{a:[9,12],t:'有同学拿你家里的条件说闲话,你没接话。',once:1,bad:1},
+// 13-18 岁
+{a:[13,16],t:'你十四岁就考上了大学,成了全校的传说。',once:1,c:{intel:15},good:1,e:{intel:3}},
+{a:[13,18],t:'你写的小说在网上爆火,出版社主动找上了门。',once:1,c:{intel:10},good:1,e:{wealth:3, charm:2}},
+{a:[14,18],t:'你被保送了,全校只有你一个名额。',once:1,c:{intel:14},good:1,e:{intel:2}},
+{a:[14,18],t:'你随手拍的一条视频一夜之间百万播放,评论区吵翻了。',once:1,good:1,e:{charm:2}},
+{a:[15,18],t:'有人在网上冒充你,到处骗钱。你不得不录了视频澄清。',once:1,bad:1},
+// 19-25 岁
+{a:[19,24],t:'你大学还没毕业就被大公司预定了,开出的年薪是七位数。',once:1,c:{intel:12},good:1,e:{wealth:4}},
+{a:[19,25],t:'你投的一个项目,三个月翻了二十倍。',once:1,good:1,e:{wealth:5}},
+{a:[19,25],t:'你参加的选秀拿了冠军,一夜之间到处都是你的名字。',once:1,c:{charm:14},good:1,e:{charm:3, wealth:3}},
+{a:[19,25],t:'你写的一首歌不知被谁翻唱了,莫名其妙地火了。',once:1,good:1,e:{charm:2, wealth:2}},
+{a:[20,26],t:'你随手买的彩票中了头奖。你去领奖那天,手一直在抖。',once:1,p:.25,good:1,e:{wealth:8}},
+{a:[20,26],t:'你被邀请去青年论坛发言,台下坐着你以前只能在新闻里看到的人。',once:1,c:{intel:14},good:1,e:{charm:2}},
+{a:[21,26],t:'你最信任的合伙人,带着账上所有的钱跑了。',once:1,p:.3,bad:1,e:{wealth:-6}},
+{a:[21,26],t:'你被拉进一个饭局,席间有人设了个局,想从你这儿套钱。',once:1,bad:1,e:{wealth:-3}},
+// 26-40 岁
+{a:[26,35],t:'你创办的公司上市了,敲钟那天你站在最中间。',once:1,good:1,e:{wealth:8, charm:2}},
+{a:[26,38],t:'你买的那支股票一年涨了三倍,朋友都来问你消息。',once:1,good:1,e:{wealth:4}},
+{a:[28,38],t:'你被评为行业年度人物,封面照拍得很精神。',once:1,good:1,e:{charm:2, wealth:2}},
+{a:[28,40],t:'你几年前买下的那块地,因为规划调整,价格翻了好几番。',once:1,good:1,e:{wealth:6}},
+{a:[28,40],t:'你随口夸了一句的一个牌子,第二天卖到断货。',once:1,good:1,e:{charm:2}},
+{a:[30,40],t:'你的公司被巨头收购,你套现离场,数字大得你自己都算不清。',once:1,good:1,e:{wealth:7}},
+{a:[30,40],t:'你投的一部电影成了票房冠军,庆功宴上你被灌得不省人事。',once:1,p:.5,good:1,e:{wealth:4, health:-1}},
+{a:[28,40],t:'你投的一个项目突然暴雷,损失惨重。你第一次觉得钱不是万能。',once:1,bad:1,e:{wealth:-6}},
+{a:[28,40],t:'你签的一份大合同,对方违约了。官司打了很久,你心力交瘁。',once:1,bad:1,e:{wealth:-4, health:-1}},
+{a:[26,40],t:'你太出名了,家门口天天有人蹲守,你连出门买菜都做不到。',once:1,bad:1,e:{health:-1}},
+{a:[26,40],t:'你被媒体写成了负面典型,那段时间你不敢看手机。',once:1,bad:1,e:{charm:-2}},
+{a:[30,42],t:'你开始觉得什么都来得太容易,做什么都提不起劲。',once:1,bad:1,e:{health:-1}},
+{a:[32,42],t:'你花钱如流水,账上第一次出现了负号。',once:1,bad:1,e:{wealth:-3}},
+{a:[25,45],t:'你在一次饭局上认识了一个人。后来你才知道,他改变了你的一生。',once:1,good:1,e:{wealth:3, intel:2}},
+// 41-60 岁
+{a:[41,55],t:'你捐建的一所学校落成了,门口刻着你的名字。',once:1,good:1,e:{charm:3}},
+{a:[42,58],t:'你上了财富榜,排名还挺靠前。',once:1,c:{wealth:35},good:1,e:{wealth:3, charm:1}},
+{a:[45,60],t:'你的自传出版了,首印当天就卖断货。',once:1,good:1,e:{wealth:2, charm:2}},
+{a:[46,60],t:'一所大学设立了以你名字命名的奖学金。',once:1,good:1,e:{charm:3}},
+{a:[46,62],t:'你买下了一支球队,纯粹是因为小时候喜欢。',once:1,c:{wealth:40},good:1},
+{a:[48,62],t:'有人写了本书爆料你,里面一半是真的一半是编的。',once:1,bad:1,e:{charm:-2}},
+// 61+
+{a:[61,90],t:'有人给你拍了部纪录片,你看着屏幕里的自己,有点陌生。',once:1,good:1,e:{charm:2}},
+{a:[62,95],t:'你成立了一个基金会,把这些年攒下的很大一部分都捐了出去。',once:1,good:1,e:{charm:3, wealth:-5}},
+{a:[65,95],t:'你的故事被写进了教材,孩子们在课堂上念到你的名字。',once:1,good:1,e:{charm:3}},
+{a:[66,99],t:'你在公园里被一个年轻人认出来,他说他是听着你的故事长大的。',once:1,good:1,e:{charm:1}},
+{a:[70,99],t:'医生说你身体好得不像这个岁数的人,问你有什么秘诀。',once:1,good:1,e:{health:2}},
+{a:[75,99],t:'你活了太久,认识的人一个个都走了,只剩你还坐在这里。',once:1,bad:1}
+];
+
+/* ---------- 开挂专属抉择 ---------- */
+const CHOICES_GOD = [
+  { a:[20,26], p:.8,
+    q:'一家快倒闭的公司找你,说只要一笔钱就能救活,你要不要接手?',
+    opts:[
+      { t:'买了,我看好它', c:{wealth:20}, r:'你买下了它。三年后,它成了行业里绕不开的名字。', e:{wealth:8}, good:1 },
+      { t:'先不管,让它自生自灭', r:'你没接。后来它被别人买走,做成了你没想到的样子。', e:{} }
+    ]},
+  { a:[24,30], p:.75,
+    q:'有导演找你演一部电影的主角,说这个角色是照着你写的。',
+    opts:[
+      { t:'接!我想试试', c:{charm:12}, r:'电影上映后,你成了那年的热门话题。', e:{charm:4, wealth:3}, good:1 },
+      { t:'算了,我不想抛头露面', r:'你婉拒了。那部片子换了个主演,票房一般。', e:{charm:1} }
+    ]},
+  { a:[28,34], p:.7,
+    q:'有人建议你把身份公开,说这样能带来更多机会,也会带来更多麻烦。',
+    opts:[
+      { t:'公开,我不怕', r:'你站到了台前。机会确实多了,麻烦也多了。', e:{charm:4, health:-1, wealth:3} },
+      { t:'继续低调,闷声发财', r:'你选择了不露头。钱照赚,日子清净。', e:{wealth:4, health:1}, good:1 }
+    ]},
+  { a:[30,38], p:.7,
+    q:'有个认识不久的人,说有个项目稳赚,想拉你一起。',
+    opts:[
+      { t:'投,钱放着也是放着', c:{wealth:30}, r:'你投了进去。半年后,这个人失联了。', e:{wealth:-8}, bad:1 },
+      { t:'不投,我自己看得懂的才做', r:'你没投。后来听说那个项目是个局,进去了好几个。', e:{wealth:2}, good:1 }
+    ]},
+  { a:[34,44], p:.7,
+    q:'一支你从小支持的球队要出售,价格不便宜。',
+    opts:[
+      { t:'买下它,圆小时候的梦', c:{wealth:35}, r:'你成了这支球队的老板。第一次坐在主场看台上,你眼眶热了。', e:{charm:4, wealth:-5}, good:1 },
+      { t:'不买,那是无底洞', r:'你没买。球队卖给了别人,你偶尔还会看他们的比赛。', e:{wealth:2} }
+    ]},
+  { a:[40,48], p:.7,
+    q:'有人劝你拿出一大笔钱做慈善,说这样能积德,也能换来名声。',
+    opts:[
+      { t:'捐,而且要捐得实在', c:{wealth:30}, r:'你捐建了一批学校和医院。很多年之后,还有人记得这件事。', e:{charm:6, wealth:-6}, good:1 },
+      { t:'不捐,钱是我自己挣的', r:'你拒绝了。有人说你小气,你没回应。', e:{wealth:3, charm:-2} }
+    ]},
+  { a:[45,55], p:.7,
+    q:'你想歇一歇了,但手里的摊子没人接得住。',
+    opts:[
+      { t:'找个职业经理人,自己退到后面', c:{wealth:25}, r:'你把公司交给了专业团队。刚开始天天睡不着,半年后才适应。', e:{health:2, wealth:-3} },
+      { t:'再撑几年,放不下', r:'你继续撑着。生意还在,人也越来越累。', e:{wealth:3, health:-2} }
+    ]},
+  { a:[50,60], p:.7,
+    q:'有本书把你写得很不堪,出版社问你:要不要走法律程序?',
+    opts:[
+      { t:'告,一定要告到底', c:{wealth:20}, r:'官司打了三年,你赢了。但那些话已经传得到处都是了。', e:{charm:-1, wealth:-2} },
+      { t:'不理它,过好自己的日子', r:'你没理会。半年后没人再提那本书。', e:{health:1, charm:1}, good:1 }
+    ]},
+  { a:[60,75], p:.75,
+    q:'你已经拥有得够多了。要不要把大部分身家都捐出去?',
+    opts:[
+      { t:'捐,留够自己花的就行', r:'你把绝大部分都捐了。签完字那晚,你睡得特别踏实。', e:{charm:8, wealth:-10, health:2}, good:1 },
+      { t:'不捐,留给后人是应该的', r:'你把家产留给了后人。他们为怎么分吵了很多年。', e:{wealth:4, charm:-2} }
+    ]},
+  { a:[70,88], p:.7,
+    q:'一个年轻人跑来问你:人这一辈子,到底什么最重要?',
+    opts:[
+      { t:'跟他讲了一整个下午', c:{intel:15}, r:'你把这一生想明白的事都说了。他走的时候,眼睛是亮的。', e:{charm:3, intel:2}, good:1 },
+      { t:'笑了笑,说"你自己去走一遍就知道了"', r:'你没多说。有些事确实说不明白。', e:{} }
+    ]}
+];
+
+/* =========================================================
+   隐 藏 路 线
+   小概率冒出一个"不对劲"的选项。选了,这一生就拐进另一条时间线:
+   事件池、抉择、寿命、结局称号全部换成那一套。
+   ========================================================= */
+const ROUTE_HOOKS = [
+  { path:'xian', a:[7,16], p:.07,
+    q:'旧书摊最底下压着一本没有封皮的书。你翻开一页,上面的字一个也不认得,却越看越挪不开眼。',
+    opts:[
+      { t:'买下来,带回家', route:true, r:'摊主收了钱,意味深长地看了你一眼,什么也没说。', e:{intel:2} },
+      { t:'放回去,走了', r:'你走了。走出去很远,还是忍不住回头看了一眼。' }
+    ]},
+  { path:'magic', a:[9,18], p:.07,
+    q:'一只猫头鹰半夜在敲你的窗户,脚上绑着一封蜡封口的信,信封上写着你的名字。',
+    opts:[
+      { t:'拆开看', route:true, r:'信上只有一句话:你被录取了。落款是一个你从没听说过的学院。', e:{intel:2} },
+      { t:'关窗睡觉', r:'你把窗户关上了。那只猫头鹰在窗台上站到天亮才走。' }
+    ]},
+  { path:'isekai', a:[11,34], p:.06,
+    q:'你出了场车祸,昏迷了三天。醒来后记得最清楚的,不是医院的白墙,而是另一个世界的事。',
+    opts:[
+      { t:'那些画面太清楚了,我想弄清楚', route:true, r:'你开始查。那片旷野、那座城,一天比一天清晰。', e:{intel:2, health:-1} },
+      { t:'大概是昏头了', r:'你摇摇头,把那些画面压了下去。', e:{health:-1} }
+    ]}
+];
+
+const ROUTES = {};
+
+ROUTES.xian = {
+  name:'修 仙', icon:'☯', color:'#8fe3ff',
+  life:[240, 420], step:[3, 8],
+  open:'你把那本书收进了怀里。当天夜里,你梦见一座望不到顶的山,山上有钟声。',
+  titles:[[0,'道消身殒'],[250,'一介散修'],[280,'金丹真人'],[330,'一代仙尊'],[380,'羽化登仙']],
+  ev:[
+{a:[7,400],t:'你照着书上画的样子盘腿坐下,第一次感觉到身体里有什么东西在缓缓流动。',once:1,good:1,e:{intel:2,health:2}},
+{a:[7,400],t:'你开始每天天不亮就起来打坐。家里人以为你魔怔了。',once:1,e:{intel:1}},
+{a:[8,400],t:'你引气入体成功了,体内多了一丝极细的暖流。',once:1,c:{intel:8},good:1,e:{intel:2,health:1}},
+{a:[8,400],t:'你试着运气,结果岔了气,吐出一口血。',once:1,p:.3,bad:1,e:{health:-2}},
+{a:[9,400],t:'一个穿灰袍的老人找到你,说你的根骨难得,愿意收你为徒。',once:1,c:{health:8},good:1,e:{intel:2,health:2}},
+{a:[9,400],t:'灵根测试的结果很差,同门看你的眼神从那以后就变了。',once:1,p:.35,bad:1,e:{charm:-2}},
+{a:[10,400],t:'你第一次御剑,飞了三丈高就摔了下来,膝盖磕破了一大块。',once:1,e:{health:-1,intel:1}},
+{a:[10,400],t:'你御剑飞过一座山头,风灌满了袖子,你笑出了声。',once:1,good:1,e:{intel:2,health:1}},
+{a:[10,400],t:'你在后山采到一株百年灵草,小心翼翼地收进怀里。',once:1,good:1,e:{wealth:2}},
+{a:[12,400],t:'你炼的第一炉丹药炸了,把整间丹房熏得漆黑。',once:1,p:.4,bad:1,e:{wealth:-1}},
+{a:[12,400],t:'你炼成一炉上品丹药,师长当众夸了你一句。',once:1,c:{intel:10},good:1,e:{wealth:3,charm:1}},
+{a:[12,400],t:'宗门大比,你被人一招打下了擂台。',once:1,p:.4,bad:1,e:{charm:-1,health:-1}},
+{a:[12,400],t:'宗门大比,你一鸣惊人,连胜三个比你早入门的师兄。',once:1,c:{intel:12},good:1,e:{charm:3,intel:1}},
+{a:[13,400],t:'你闭关三个月,出关时感觉周身经脉打通了一截。',once:1,good:1,e:{intel:2,health:2}},
+{a:[13,400],t:'你走火入魔,在洞里疼得满地打滚,三天后才缓过来。',once:1,p:.25,bad:1,e:{health:-3}},
+{a:[14,400],t:'你下山历练,第一次亲眼看见人间的疾苦。',once:1,e:{intel:1,charm:1}},
+{a:[14,400],t:'你救下一个被妖物追赶的村子,村民给你立了长生牌位。',once:1,good:1,e:{charm:3}},
+{a:[15,400],t:'你遇到一个同门。他后来成了你这一生最要紧的人。',once:1,good:1,e:{charm:2}},
+{a:[15,400],t:'你被同门陷害,背了黑锅,被罚面壁三年。',once:1,p:.3,bad:1,e:{charm:-2}},
+{a:[16,400],t:'你结丹了。那天雷云压顶,你站在山顶,浑身是血。',once:1,c:{intel:14},good:1,e:{intel:4,health:3}},
+{a:[18,400],t:'你收下了第一个徒弟,是个眼睛很亮的少年。',once:1,c:{intel:16},good:1,e:{charm:3}},
+{a:[18,400],t:'你和一位老对手斗法,两败俱伤,谁也没占到便宜。',once:1,p:.35,e:{health:-2,intel:1}},
+{a:[20,400],t:'你得到一枚上古玉简,里面记着一门失传的剑法。',once:1,good:1,e:{intel:3}},
+{a:[20,400],t:'你在一片荒原上独自走了七天七夜,想明白了一件事。',once:1,e:{intel:2}},
+{a:[22,400],t:'你结婴了。天地异象,方圆百里的鸟兽都朝你这边伏下。',once:1,c:{intel:20},good:1,e:{intel:5,health:4}},
+{a:[25,400],t:'你和一位故人对饮。他问你:修了这么多年,后悔吗?',once:1,e:{intel:1}},
+{a:[26,400],t:'你的一个朋友被人杀了。你查了很久。',once:1,p:.4,bad:1,e:{charm:-1}},
+{a:[28,400],t:'你报了仇。那天你站在雨里,没有一点轻松的感觉。',once:1,c:{intel:18},e:{charm:-1,intel:2}},
+{a:[30,400],t:'你开辟了自己的道场,一批批后辈来投奔你。',once:1,c:{charm:14},good:1,e:{charm:3,wealth:3}},
+{a:[40,400],t:'你化神了。那一刻你听见了整个世界的呼吸。',once:1,c:{intel:26},good:1,e:{intel:6,health:5}},
+{a:[52,400],t:'你开始闭关,一闭就是三十年。出来时,山门前的树都换了几茬。',once:1,e:{intel:3}},
+{a:[66,400],t:'你出关那天,发现认识的人大半都不在了。',once:1,e:{charm:-1,intel:1}},
+{a:[74,400],t:'天劫来了。九道雷劈下来,你扛住了七道。',once:1,c:{health:20},good:1,e:{health:4,intel:3}},
+{a:[86,400],t:'你在一片云海上建了座房子,一个人住了很久。',once:1,good:1,e:{health:2}},
+{a:[105,400],t:'有人把你写进了话本,说你一剑能断江。你看了,觉得写得挺离谱。',once:1,good:1,e:{charm:3}},
+{a:[130,400],t:'你飞升了。走的那天,天上有钟声,凡人抬头只看见一片金光。',once:1,c:{intel:35},p:.55,good:1,e:{charm:5,intel:5}},
+{a:[20,400],t:'你渡劫失败,身死道消。',once:1,p:.008,die:1,dr:'渡劫失败'},
+{a:[13,400],t:'走火入魔,你再也没能醒来。',once:1,p:.009,die:1,dr:'走火入魔'}
+  ],
+  daily:[
+{t:'你打坐了一整天。有只鸟在你肩膀上停了一会儿才飞走。',e:{intel:1}},
+{t:'你练剑练到手腕发酸,连筷子都拿不稳。'},
+{t:'你去后山采药,顺便看了半天的云。'},
+{t:'你煮了一壶茶,一个人喝到凉。'},
+{t:'你和师兄弟下山买了点东西,在街边吃了碗面。'},
+{t:'你夜里看星星,看了整整一夜。'},
+{t:'你把剑擦了一整天,剑身亮得能照出人影。'},
+{t:'你养的鹤不见了。你找了三天,它自己飞回来了。'},
+{t:'有个后辈来请教,你讲了一下午。',e:{charm:1}},
+{t:'你把攒下的灵石倒出来数了一遍,又收回去。',e:{wealth:1}},
+{t:'你站在崖边很久,风把衣袖吹得鼓起来。'},
+{t:'你忽然想起小时候的事,发了很久的呆。'}
+  ],
+  ch:[
+{a:[20,400],q:'突破在即,但风险很大 —— 稍有不慎就是走火入魔。',
+ opts:[
+  {t:'赌一把,现在就冲',r:'你冲了。经脉里像是灌进了滚烫的铁水。',e:{intel:4},good:1},
+  {t:'稳住,再等几年',r:'你压下了那股劲,慢慢来。',e:{health:2}}]},
+{a:[25,400],q:'山下有个村子遭了灾,来求你出手。可你正卡在闭关的紧要关头。',
+ opts:[
+  {t:'破关而出,去救人',r:'你去了。村子保住了,你的境界却退了一层。',e:{charm:4,intel:-2},good:1},
+  {t:'不能停,让他们自求多福',r:'你没动。后来听说那个村子没剩下几个人。',e:{intel:2,charm:-3},bad:1}]},
+{a:[30,400],q:'你的徒弟犯了门规,按规矩该废去修为。',
+ opts:[
+  {t:'按规矩办',r:'你亲手废了他的修为。他走的时候没有回头。',e:{charm:-2,intel:1}},
+  {t:'保下他,自己领罚',r:'你把责任揽了过来,替他受了罚。',e:{charm:3,health:-1},good:1}]},
+{a:[35,400],q:'宗门要选新掌门,几位长老都推举你。',
+ opts:[
+  {t:'接下这个位置',r:'你当上了掌门。从此修行的时间少了很多。',e:{charm:5,intel:-1,wealth:3}},
+  {t:'推辞,我只想修行',r:'你拒绝了。有人说你清高,也有人说你傻。',e:{intel:4},good:1}]},
+{a:[40,400],q:'你得到一门速成功法,修起来快得惊人 —— 但上面有股血的味道。',
+ opts:[
+  {t:'练!我等不了那么久',r:'你练了。进展快得让你自己都害怕。',e:{intel:8,health:-4},bad:1},
+  {t:'烧了它',r:'你把那卷东西烧了。灰烬里飘出一股腥气。',e:{intel:3},good:1}]},
+{a:[120,400],q:'飞升的机会只有一次。但一旦上去,这世上的一切都与你无关了。',
+ opts:[
+  {t:'走',r:'你踏上了那道金光。',e:{charm:4,intel:4},good:1},
+  {t:'留下。这里还有我放不下的人',r:'你留了下来。日子照旧,只是天劫再没来过。',e:{charm:5,health:2}}]}
+  ]
+};
+
+ROUTES.magic = {
+  name:'魔 法', icon:'✦', color:'#c8a2ff',
+  life:[150, 260], step:[2, 6],
+  open:'你按信上的地址,从两根柱子中间穿了过去。眼前一宽,一条石板路通向远处的城堡。',
+  titles:[[0,'魔力溃散'],[155,'学徒'],[180,'正式魔法师'],[210,'魔导士'],[235,'大魔导师']],
+  ev:[
+{a:[9,300],t:'你买了第一根魔杖。店主说,它挑了整整一年才等到你。',once:1,good:1,e:{intel:2}},
+{a:[9,300],t:'分院的时候,那顶破帽子在你头上犹豫了很久。',once:1,e:{charm:1}},
+{a:[10,300],t:'你的第一个咒语把室友变成了一头猪,花了半天才变回来。',once:1,p:.5,bad:1,e:{charm:-1}},
+{a:[10,300],t:'你的悬浮咒一次就成功了,教授给了你一个满意的眼神。',once:1,c:{intel:8},good:1,e:{intel:2}},
+{a:[10,300],t:'魔药课上你炸了坩埚,被罚去地窖擦了三天药罐。',once:1,p:.45,bad:1},
+{a:[11,300],t:'你偷偷溜进禁书区,找到一本会自己翻页的书。',once:1,good:1,e:{intel:3}},
+{a:[11,300],t:'你第一次骑扫帚飞起来。风从耳边过去,你笑了很久。',once:1,good:1,e:{health:1,intel:1}},
+{a:[12,300],t:'你的召唤咒出了错,教室里蹦出一群青蛙。',once:1,p:.4,bad:1,e:{charm:-1}},
+{a:[12,300],t:'你和同学组队参加魔法竞赛,拿了个不错的名次。',once:1,c:{intel:12},good:1,e:{charm:2,intel:1}},
+{a:[13,300],t:'你发现自己身上的血统,和你想的不太一样。',once:1,e:{intel:2}},
+{a:[13,300],t:'有人在背后拿你的出身说闲话。',once:1,p:.4,bad:1,e:{charm:-1}},
+{a:[14,300],t:'你在禁林里遇到一头受了伤的独角兽,你救了它。',once:1,good:1,e:{charm:2,health:1}},
+{a:[14,300],t:'你的黑魔法防御课成绩是全年级第一。',once:1,c:{intel:14},good:1,e:{intel:2}},
+{a:[15,300],t:'你被一个高年级的学生施了咒,躺了三天。',once:1,p:.35,bad:1,e:{health:-2}},
+{a:[15,300],t:'你学会了一个很危险的咒语,谁也没告诉。',once:1,e:{intel:2}},
+{a:[16,300],t:'你参加了一场正式决斗,赢得非常险。',once:1,good:1,e:{intel:2,charm:1}},
+{a:[16,300],t:'有本书告诉你,世上存在一种能让人起死回生的魔法。',once:1,e:{intel:1}},
+{a:[17,300],t:'你毕业了。离开那天,城堡在雨里显得特别大。',once:1,e:{charm:1}},
+{a:[18,300],t:'你成了正式魔法师,有了自己的执照。',once:1,good:1,e:{wealth:2}},
+{a:[19,300],t:'一场魔物袭击里,你救下一整条街的人。',once:1,c:{intel:16},good:1,e:{charm:4}},
+{a:[20,300],t:'你开始研究一个没人敢碰的课题。',once:1,e:{intel:3}},
+{a:[22,300],t:'你的一个同学被黑暗魔法吞噬了。你伸手了,但没拉住。',once:1,p:.4,bad:1,e:{charm:-1}},
+{a:[24,300],t:'因为一本书,你成了魔法部的通缉对象。',once:1,p:.3,bad:1,e:{charm:-2,wealth:-1}},
+{a:[25,300],t:'你发明了一个新咒语,被写进了教科书。',once:1,c:{intel:22},good:1,e:{intel:4,charm:2}},
+{a:[28,300],t:'你回到学院当了教授,站在当年教授站的那个位置上。',once:1,c:{intel:20},good:1,e:{wealth:3,charm:2}},
+{a:[30,300],t:'你驯服了一条龙。它愿意让你骑。',once:1,c:{charm:18},good:1,e:{charm:3,health:2}},
+{a:[35,300],t:'你主持了一场足以改写魔法史的实验。',once:1,c:{intel:26},good:1,e:{intel:5}},
+{a:[40,300],t:'黑暗魔法在你耳边说了很久的话。你听完了,然后走开了。',once:1,e:{intel:2}},
+{a:[45,300],t:'你把一道禁咒封进自己的记忆里,代价是忘掉了一部分往事。',once:1,e:{intel:3,charm:-1}},
+{a:[50,300],t:'你成了大魔导师。授勋那天,你想起自己第一次施咒把室友变成猪。',once:1,c:{intel:30},good:1,e:{intel:5,charm:3}},
+{a:[62,300],t:'你开始写书,把这一生会的东西都记下来。',once:1,good:1,e:{intel:3}},
+{a:[74,300],t:'你的学生比你有名了,你特别得意。',once:1,good:1,e:{charm:2}},
+{a:[92,300],t:'魔法界为你立了一尊像。你去看了一眼,觉得不太像自己。',once:1,good:1,e:{charm:3}},
+{a:[112,300],t:'你活了很久了。有一天你发现,认识的人一个都不剩了。',once:1,e:{charm:-1}},
+{a:[132,300],t:'你成了传说里才有的那种人。年轻人在书上读到你的名字。',once:1,good:1,e:{charm:4}},
+{a:[14,300],t:'魔力反噬,你没能撑过去。',once:1,p:.008,die:1,dr:'魔力反噬'},
+{a:[18,300],t:'一次实验出了事,你再也没能走出那间屋子。',once:1,p:.007,die:1,dr:'实验意外'}
+  ],
+  daily:[
+{t:'你练了一整天咒语,嗓子都哑了。',e:{intel:1}},
+{t:'你的猫头鹰把信送错了地方,你赔了人家一盒饼干。',e:{wealth:-1}},
+{t:'你在图书馆待了一整天,只翻了三页书。'},
+{t:'你煮魔药煮糊了,厨房一股怪味。'},
+{t:'你骑着扫帚在湖边飞了两圈,心情很好。',e:{health:1}},
+{t:'你的魔杖有点不听使唤,你把它擦了一遍。'},
+{t:'有人请你去给一群小孩表演小戏法,你去了。',e:{charm:1}},
+{t:'你把书架重新排了一遍,按颜色排的。'},
+{t:'你半夜爬起来看星星,顺手记了几笔。',e:{intel:1}},
+{t:'你和老朋友在酒馆坐到打烊。'},
+{t:'你把旧魔杖收进抽屉,没舍得扔。'},
+{t:'你试了个新配方,结果房间飘了一整天紫色的烟。'}
+  ],
+  ch:[
+{a:[18,300],q:'魔法部要你去追捕一个老同学。你知道他为什么会变成那样。',
+ opts:[
+  {t:'按规矩办,去抓他',r:'你抓到了他。他被关起来那天,隔着栏杆看了你一眼。',e:{charm:-2,wealth:2}},
+  {t:'放他走,回去说我追丢了',r:'你说没追上。你回去受了处分,但心里松快。',e:{charm:2,wealth:-1},good:1}]},
+{a:[22,300],q:'有一道禁咒能解决眼前的危机,但它会让你一直往下掉。',
+ opts:[
+  {t:'用!现在顾不上那么多',r:'你念出了那道咒。危机解除了,你的一部分自此留在了那里。',e:{intel:6,health:-5,charm:3},bad:1},
+  {t:'不用,想别的办法',r:'你熬了三个月,终于找出了另一个解法。',e:{intel:5},good:1}]},
+{a:[28,300],q:'学院请你回去教黑魔法防御。这门课没人愿意接,已经换了好几个老师。',
+ opts:[
+  {t:'我接',r:'你接下了。每年都有学生问你:老师,你怕过吗?',e:{charm:4,wealth:1},good:1},
+  {t:'不接,我还没活够',r:'你拒绝了。那门课后来又换了七个老师。',e:{health:1}}]},
+{a:[35,300],q:'你研究出了一项成果,但公布它会让很多人难堪。',
+ opts:[
+  {t:'公布,真相更重要',r:'你公布了。得罪了一大片人,但教科书改了。',e:{intel:5,charm:-2},good:1},
+  {t:'压下来,时候没到',r:'你把论文锁进了抽屉。它一直躺在那里。',e:{wealth:2,intel:1}}]},
+{a:[50,300],q:'黑暗魔法又来找你了。这一次,它给了一个具体的好处。',
+ opts:[
+  {t:'听听看',r:'你听了。你拿到了一些东西,也失去了一些。',e:{intel:8,charm:-4},bad:1},
+  {t:'滚出去',r:'你把那东西赶走了。屋里的灯重新亮了起来。',e:{intel:4,health:1},good:1}]},
+{a:[80,300],q:'你有机会做一件让世上所有魔法失效的事 —— 包括你自己的。',
+ opts:[
+  {t:'做。魔法带来的麻烦够多了',r:'你做了。第二天早上,你连一根蜡烛都点不着了。',e:{charm:4,health:2,intel:-3}},
+  {t:'不做。我舍不得',r:'你收回了手。世界还是原来的样子。',e:{intel:3}}]}
+  ]
+};
+
+ROUTES.isekai = {
+  name:'异 世 界', icon:'⚔', color:'#ffb45e',
+  life:[110, 190], step:[2, 5],
+  open:'你睁开眼,站在一片从没见过的旷野上。天上有两个太阳,远处有一座城。',
+  titles:[[0,'无名的一具尸骨'],[116,'落魄的冒险者'],[128,'小有名气的佣兵'],[145,'一国之主'],[162,'被人写进史诗的人']],
+  ev:[
+{a:[11,300],t:'一个村子的人收留了你,给你端来一碗很咸的热汤。',once:1,good:1,e:{health:1}},
+{a:[11,300],t:'你花了半年学会这里的语言。',once:1,e:{intel:2}},
+{a:[11,300],t:'你第一次见到哥布林,差点没跑掉。',once:1,p:.5,bad:1,e:{health:-1}},
+{a:[11,300],t:'你接下了人生第一个委托:去森林里找一头走丢的牛。',once:1,e:{wealth:1}},
+{a:[11,300],t:'你在冒险者公会登记了名字。接待员说,又一个外地人。',once:1},
+{a:[12,300],t:'一个剑士救了你一命。后来你们成了同伴。',once:1,good:1,e:{charm:2}},
+{a:[12,300],t:'你花光积蓄买了一把剑,剑身上有一道已经磨平的缺口。',once:1,e:{wealth:-1,health:1}},
+{a:[13,300],t:'你的小队第一次打死了一头巨狼。',once:1,c:{health:10},good:1,e:{charm:2,health:1}},
+{a:[13,300],t:'你的同伴死了。你把他埋在路边,立了块木牌。',once:1,p:.35,bad:1,e:{charm:-1}},
+{a:[14,300],t:'你发现这个世界的月亮是紫色的。',once:1},
+{a:[14,300],t:'你在一座废墟里找到一块会发光的石头。',once:1,good:1,e:{intel:2}},
+{a:[15,300],t:'你被当地的贵族通缉了,理由荒唐得可笑。',once:1,p:.3,bad:1,e:{charm:-2}},
+{a:[15,300],t:'你在一场交易里被人骗了,亏了一大笔。',once:1,p:.4,bad:1,e:{wealth:-2}},
+{a:[16,300],t:'你升到了公会的中级,胸前多了一枚徽章。',once:1,c:{health:14},good:1,e:{charm:2,wealth:2}},
+{a:[16,300],t:'你第一次听见了魔王的传说。',once:1,e:{intel:1}},
+{a:[18,300],t:'你救下一位公主。她说她不需要人救,但还是谢谢你。',once:1,good:1,e:{charm:3}},
+{a:[18,300],t:'你找到一个可能通往原世界的洞口。你在洞口站了一整夜。',once:1,e:{intel:1}},
+{a:[20,300],t:'你的队伍打死了一头龙,分赃的时候吵了一架。',once:1,c:{health:20},good:1,e:{wealth:4}},
+{a:[20,300],t:'你成了公会的名人,有人专程来找你组队。',once:1,c:{charm:16},good:1,e:{charm:3}},
+{a:[22,300],t:'你被最信任的同伴出卖了,差点死在一座地牢里。',once:1,p:.35,bad:1,e:{health:-2,charm:-2}},
+{a:[24,300],t:'你决定去挑战魔王。出发那天,来送你的人排了半条街。',once:1,c:{health:22},good:1,e:{charm:3}},
+{a:[25,300],t:'你打败了魔王。原来他和你一样,也是从别的地方来的。',once:1,c:{health:28},p:.5,good:1,e:{charm:5,intel:3}},
+{a:[25,300],t:'魔王的手下把你打退了。你丢了一只眼睛。',once:1,p:.5,bad:1,e:{health:-3,charm:-1}},
+{a:[28,300],t:'人们推举你当国王。你推辞了三次,第四次没推掉。',once:1,c:{charm:20},good:1,e:{wealth:5,charm:3}},
+{a:[30,300],t:'你建国了。国名是你原来住的那条街的名字。',once:1,c:{charm:22},good:1,e:{wealth:5}},
+{a:[35,300],t:'你和一个这个世界的人成了家。',once:1,c:{charm:14},good:1,e:{health:2}},
+{a:[40,300],t:'你在这个世界待的时间,已经超过了在原来世界的时间。',once:1,e:{intel:2}},
+{a:[45,300],t:'你听说,那个洞口又开了。',once:1,e:{intel:1}},
+{a:[50,300],t:'你站在洞口前。身后是你的国、你的人民、你的家。',once:1,e:{intel:1}},
+{a:[55,300],t:'你没有走。你转身走回了城里。',once:1,c:{charm:18},e:{charm:2}},
+{a:[60,300],t:'你的国家安稳了很多年。史书上把你写在了第一章。',once:1,good:1,e:{charm:4}},
+{a:[70,300],t:'你老了。有个年轻人问你是从哪儿来的,你笑了笑没回答。',once:1,e:{charm:1}},
+{a:[80,300],t:'你又看了一次两个太阳的日落。看了一辈子,还是没看够。',once:1,good:1,e:{health:1}},
+{a:[100,300],t:'你成了这个世界最古老的传说。',once:1,good:1,e:{charm:4}},
+{a:[18,300],t:'你在一场遭遇战里没能活下来。',once:1,p:.007,die:1,dr:'战死'},
+{a:[25,300],t:'你被身边的人下了毒。',once:1,p:.006,die:1,dr:'被人下毒'}
+  ],
+  daily:[
+{t:'你们赶了一整天的路,晚上在路边搭了帐篷。'},
+{t:'你在旅店吃了一盘不知道是什么的肉,味道还行。',e:{health:1}},
+{t:'你磨了一整天的剑。'},
+{t:'你在集市上买了一双靴子,很合脚。',e:{wealth:-1}},
+{t:'你和同伴围着火堆聊天,聊到很晚。',e:{charm:1}},
+{t:'下了三天雨,你们只能待在小屋里。'},
+{t:'你在酒馆里听人唱了一首听不懂的歌。'},
+{t:'你抄了一份地图,画得歪歪扭扭。',e:{intel:1}},
+{t:'你的马病了,你守了它一夜。'},
+{t:'你在一座小教堂里睡了一晚,很踏实。'},
+{t:'你数了数钱袋,决定这个月省着点花。'},
+{t:'你爬到山顶,看见云在脚下走。'}
+  ],
+  ch:[
+{a:[18,300],q:'公会给了你一个任务:护送一批货穿过危险地带。报酬很高。',
+ opts:[
+  {t:'接。缺钱',r:'你们走了七天,路上遇了两拨劫匪。货送到了。',e:{wealth:4,health:-2}},
+  {t:'不接,太险',r:'你推掉了。后来那支队伍没回来。',e:{health:1},good:1}]},
+{a:[22,300],q:'你发现队伍里有个人不老实,他在偷偷给敌人留记号。',
+ opts:[
+  {t:'当场揭穿他',r:'你把他按在地上。他哭着说,家里被人扣着。',e:{charm:1,intel:1}},
+  {t:'不动声色,反将一军',r:'你顺着他的记号设了个埋伏,反手端掉了对面一窝。',e:{intel:4,wealth:2},good:1}]},
+{a:[28,300],q:'国王的位置就在眼前。代价是,和你一起走到这里的人得让开。',
+ opts:[
+  {t:'我坐上去',r:'你坐上了那个位置。老朋友站得离你越来越远。',e:{wealth:5,charm:-3}},
+  {t:'让给他,我做个自由人',r:'你让了出去。你背起剑,又成了一个人。',e:{charm:3,health:2},good:1}]},
+{a:[35,300],q:'北边的城闹了瘟疫,没人敢进去。你的国家就在隔壁。',
+ opts:[
+  {t:'封城,不能让瘟疫过来',r:'你封了城。你保住了自己的人,也听见了那边敲了很多天的钟。',e:{wealth:3,charm:-2}},
+  {t:'开仓,派人进去',r:'你开了仓。死了很多人,但活下来的更多。你因此穷了三年。',e:{charm:5,wealth:-3},good:1}]},
+{a:[45,300],q:'有个自称从你原来那个世界来的人找到了你。',
+ opts:[
+  {t:'听他说话,问他那边的事',r:'你们聊了一整夜。你哭了,自己都没察觉。',e:{intel:2,health:1}},
+  {t:'不见。那不是我的世界了',r:'你让人把他送走了。那天晚上你没睡着。',e:{charm:1}}]},
+{a:[60,300],q:'你的孩子问你:爸爸/妈妈,你是从哪儿来的?',
+ opts:[
+  {t:'全都讲给他听',r:'你讲了很久很久。他听得很认真,最后说:那一定很远吧。',e:{charm:4},good:1},
+  {t:'等你长大些再说',r:'你说以后再说。后来就一直没有说。',e:{intel:1}}]}
+  ]
+};
+
+/* ---------- 状态 ---------- */
+let S = {};
+let picked = [];
+let pool = [];
+let speedFast = false;
+let skipMode = false;
+let godMode = false;
+
+function el(id){ return document.getElementById(id); }
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function show(id){
+  ['s-start','s-gk','s-talent','s-attr','s-life','s-end'].forEach(x=>el(x).classList.add('hidden'));
+  el(id).classList.remove('hidden');
+}
+
+/* ---------- 抽天赋 ---------- */
+function weightedPick(){
+  const total = Object.values(RARITY).reduce((a,b)=>a+b.weight,0);
+  let r = Math.random()*total;
+  for(const k of ['1','2','3','4']){ r -= RARITY[k].weight; if(r<=0) return +k; }
+  return 1;
+}
+/* ---------- 两种模式 ---------- */
+function startNormal(){
+  godMode = false;
+  goTalent();
+}
+function startGod(){
+  godMode = true;
+  renderGolden();
+  show('s-gk');
+}
+function renderGolden(){
+  const box = el('gklist');
+  box.innerHTML = '';
+  GOLDEN.forEach(g=>{
+    const d = document.createElement('div');
+    d.className = 'gcard';
+    d.innerHTML = '<div class="gn">' + g.n + '</div><div class="gd">' + g.d + '</div>';
+    d.onclick = ()=>{ S.gkObj = g; S.gk = g.k; goTalent(); };
+    box.appendChild(d);
+  });
+}
+
+function goTalent(){
+  picked = [];
+  pool = [];
+  const src = godMode ? TALENTS_GOD : TALENTS;
+  const seen = new Set();
+  let guard = 0;
+  while(pool.length < 10 && guard++ < 3000){
+    /* 普通模式按稀有度抽;开挂模式直接从神力天赋里抽 */
+    const cands = (godMode ? src : src.filter(t=>t.r===weightedPick()))
+      .filter(t=>!seen.has(t.n));
+    if(!cands.length) continue;
+    const t = cands[Math.floor(Math.random()*cands.length)];
+    seen.add(t.n);
+    pool.push(t);
+  }
+  pool.sort((a,b)=>a.r-b.r);
+  renderTalents();
+  show('s-talent');
+}
+function renderTalents(){
+  const box = el('tlist');
+  box.innerHTML = '';
+  pool.forEach((t,i)=>{
+    const d = document.createElement('div');
+    const on = picked.includes(i);
+    d.className = 'talent' + (on?' on':'');
+    d.innerHTML = '<div class="rr" style="color:'+RARITY[t.r].color+'">'+RARITY[t.r].name+'</div>'
+      + '<div class="nm" style="color:'+RARITY[t.r].color+'">'+t.n+'</div>'
+      + '<div class="ds">'+t.d+'</div>';
+    d.onclick = ()=>{
+      const idx = picked.indexOf(i);
+      if(idx>=0) picked.splice(idx,1);
+      else if(picked.length<3) picked.push(i);
+      renderTalents();
+    };
+    box.appendChild(d);
+  });
+  el('tcount').textContent = picked.length;
+  el('tbtn').disabled = picked.length !== 3;
+}
+
+/* ---------- 加点 ---------- */
+function goAttr(){
+  const gk = S.gkObj, isGod = godMode;
+  S = {charm:0, intel:0, health:0, wealth:0, age:0, flags:{},
+       used:new Set(), usedC:new Set(), usedT:new Set(), log:[],
+       god:isGod, gk: gk ? gk.k : null, gkObj: gk};
+  /* 金手指的加成先落袋 */
+  if(isGod && gk){
+    if(gk.e) for(const k in gk.e) S[k] = (S[k]||0) + gk.e[k];
+    if(gk.flag) S.flags[gk.flag] = true;
+  }
+  picked.forEach(i=>{
+    const t = pool[i];
+    if(t.e) for(const k in t.e) S[k] = (S[k]||0) + t.e[k];
+    if(t.flag) S.flags[t.flag] = true;
+    if(t.flag2) S.flags[t.flag2] = true;
+  });
+  // 天赋带来的加成先记下,但加点从 0 开始算
+  S.bonus = {charm:S.charm, intel:S.intel, health:S.health, wealth:S.wealth};
+  S.charm = S.intel = S.health = S.wealth = 0;
+  S.left = isGod ? 60 : 30;
+  renderAttr();
+  show('s-attr');
+}
+function renderAttr(){
+  const box = el('alist');
+  box.innerHTML = '';
+  ATTRS.forEach(a=>{
+    const v = S[a.k];
+    const bo = S.bonus ? (S.bonus[a.k]||0) : 0;
+    const boTxt = bo ? '<span class="bo">天赋 '+(bo>0?'+':'')+bo+'</span>' : '';
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<div class="lb">'+a.name+boTxt+'</div>'
+      + '<div><button class="pm" data-k="'+a.k+'" data-d="-1">−</button>'
+      + '<span class="pt '+a.cls+'">'+v+'</span>'
+      + '<button class="pm" data-k="'+a.k+'" data-d="1">+</button></div>';
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.pm').forEach(b=>{
+    b.onclick = ()=>{
+      const k = b.dataset.k, d = +b.dataset.d;
+      const cap = S.god ? 30 : 10;
+      if(d>0 && S.left>0 && S[k]<cap){ S[k]++; S.left--; }
+      if(d<0 && S[k]>0){ S[k]--; S.left++; }
+      renderAttr();
+    };
+  });
+  el('left').textContent = S.left;
+  el('attr-sub').textContent = S.god
+    ? '开挂模式:一共 60 点,每项最多 30 点'
+    : '一共 30 点,每项最多 10 点';
+  el('attr-tip').innerHTML = S.god
+    ? '开挂模式下数字直接拉满,门槛基本拦不住你。<br>但人生里的坑不会因此消失 —— 只是你摔得起。'
+    : '这些数字不是摆设 —— 人生关键处会拿它们当门槛:<br><b>智力</b> 管学业和事业 · <b>体质</b> 管健康和寿命 · <b>颜值</b> 管人缘和感情 · <b>家境</b> 管钱袋子';
+}
+
+/* ---------- 开始人生 ---------- */
+function startLife(){
+  for(const k of ['charm','intel','health','wealth']) S[k] += (S.bonus[k]||0);
+  if(S.god){
+    /* 开挂的人命硬,但也不是不会死 */
+    S.lifespan = 70 + Math.min(S.health, 40) * 1.1 + Math.floor(Math.random()*25);
+    if(S.flags.longlife) S.lifespan += 30;
+    if(S.lifespan > 150) S.lifespan = 150;
+  } else {
+    S.lifespan = 44 + S.health*2.4 + Math.floor(Math.random()*20);
+    if(S.flags.longlife) S.lifespan += 18;
+  }
+  S.revived = false;
+  S.dead = false;
+  S.year = 0;
+  S.myChoices = buildChoiceSet(S.god);   /* 本局抽到的人生抉择 */
+  el('lifebox').innerHTML = '';
+  show('s-life');
+  updateBar();
+  return runLife();   /* 返回 Promise,方便自动化测试等它跑完 */
+}
+
+function updateBar(){
+  el('k-age').textContent = S.age;
+  el('k-charm').textContent = Math.max(0,S.charm);
+  el('k-intel').textContent = Math.max(0,S.intel);
+  el('k-health').textContent = Math.max(0,S.health);
+  el('k-wealth').textContent = Math.max(0,S.wealth);
+}
+
+let yearLine = 0;
+
+/* 输出一行文字。同一年的多行靠 CSS 动画依次浮现,不用逐行干等 */
+function put(text, cls){
+  const box = el('lifebox');
+  const d = document.createElement('div');
+  d.className = 'ln ' + (cls||'');
+  d.style.animationDelay = Math.min(yearLine * 120, 960) + 'ms';
+  yearLine++;
+  d.innerHTML = text;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+/* 老代码里到处在 await 它。节奏现在交给 gate 和动画管,这里保留名字当空操作 */
+async function flushLine(){}
+
+/* ---------- 节奏:点一下出一岁 ---------- */
+let autoPlay = false;
+let gateResolve = null;
+
+/* 每一年开始前放行一次:手动模式等玩家点一下;自动模式等一小会儿 */
+function gate(){
+  if(skipMode) return Promise.resolve();
+  if(autoPlay) return sleep(speedFast ? 45 : 300);
+  return new Promise(r => { gateResolve = r; });
+}
+function tapAdvance(){
+  if(gateResolve){ const r = gateResolve; gateResolve = null; r(); }
+}
+function toggleAuto(){
+  autoPlay = !autoPlay;
+  el('autobtn').textContent = autoPlay ? '手 动 模 式' : '自 动 播 放';
+  el('speedbtn').style.display = autoPlay ? 'inline-block' : 'none';
+  el('taprow').classList.toggle('off', autoPlay);
+  if(autoPlay) tapAdvance();
+}
+document.addEventListener('keydown', function(e){
+  if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); tapAdvance(); }
+});
+
+/* ---------- 事件挑选 ---------- */
+function eligible(age){
+  const pool = S.route ? ROUTES[S.route].ev
+             : (S.god ? EVENTS.concat(EVENTS_GOD) : EVENTS);
+  return pool.filter(ev=>{
+    if(S.used.has(ev)) return false;
+    if(age < ev.a[0] || age > ev.a[1]) return false;
+    if(ev.c){
+      for(const k in ev.c){ if(S[k] < ev.c[k]) return false; }
+    }
+    return true;
+  });
+}
+function applyEffect(ev){
+  if(ev.e){
+    for(const k in ev.e){
+      S[k] += ev.e[k];
+      if(S[k] < 0) S[k] = 0;
+    }
+  }
+}
+
+/* ---------- 抉择 与 际遇 ---------- */
+function reqText(c){
+  if(!c) return '';
+  return Object.keys(c).map(function(k){
+    var a = ATTRS.filter(function(x){ return x.k === k; })[0];
+    return (a ? a.name : k) + ' ' + c[k];
+  }).join('、');
+}
+/* 一局只用一部分题:按年龄段各抽几道,剩下的留给下一局。
+   这样两局之间遇到的题目组合完全不一样,不会玩两把就腻。 */
+function buildChoiceSet(god){
+  if(S.route) return ROUTES[S.route].ch.slice();
+  var list = god ? CHOICES.concat(CHOICES_GOD) : CHOICES;
+  var bands = [[0,12,3],[13,18,3],[19,26,3],[27,40,3],[41,60,3],[61,99,2]];
+  var out = [];
+  bands.forEach(function(b){
+    var cands = list.filter(function(c){ return c.a[0] >= b[0] && c.a[0] <= b[1]; });
+    for(var i=cands.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t = cands[i]; cands[i] = cands[j]; cands[j] = t;
+    }
+    out = out.concat(cands.slice(0, b[2]));
+  });
+  return out;
+}
+function pickChoice(age){
+  /* 隐藏路线的入口:小概率冒出来,一生只碰一次。
+     h.p 是「整段年龄窗口内出现的总概率」,这里换算成每年的概率。 */
+  if(!S.route){
+    for(var i=0;i<ROUTE_HOOKS.length;i++){
+      var h = ROUTE_HOOKS[i];
+      if(S.usedC.has(h)) continue;
+      if(age < h.a[0] || age > h.a[1]) continue;
+      var win = h.a[1] - h.a[0] + 1;
+      var pYear = 1 - Math.pow(1 - h.p, 1 / win);
+      if(Math.random() < pYear) return h;
+    }
+  }
+  var list = S.myChoices || [];
+  var cands = list.filter(function(c){
+    return !S.usedC.has(c) && age >= c.a[0] && age <= c.a[1];
+  });
+  if(!cands.length) return null;
+  return cands[Math.floor(Math.random()*cands.length)];
+}
+/* ---------- 开进一条隐藏路线 ---------- */
+function openRoute(key){
+  var R = ROUTES[key];
+  if(!R || S.route) return;
+  S.route = key;
+  S.lifespan = R.life[0] + Math.floor(Math.random()*(R.life[1]-R.life[0]));
+  S.flags.tough = true;                 /* 这条路上的人不按常理衰老 */
+  S.myChoices = R.ch.slice();
+  S.usedT = new Set();
+  put('<span class="routeopen">✦ 你的人生拐进了一条不在原本剧本里的岔路 ✦<br>' +
+      R.icon + ' ' + R.name + R.icon + '</span>', '');
+  put('· ' + R.open, 'good');
+}
+/* 弹出选项,等玩家选。属性不够的选项会变灰并写明差多少 */
+function askChoice(ch){
+  return new Promise(function(resolve){
+    var usable = ch.opts.filter(function(o){
+      return !o.c || Object.keys(o.c).every(function(k){ return S[k] >= o.c[k]; });
+    });
+    /* 「直接看结局」模式下不该卡住等你点,自动挑一个够得着的选项 */
+    if(skipMode){
+      var auto = usable[0] || ch.opts[0];
+      S.usedC.add(ch);
+      if(auto.e) applyEffect(auto);
+      put('<span class="picked">(快进中,替你选了:' + auto.t + ')</span>', 'tap');
+      put('· ' + auto.r, auto.good ? 'good' : (auto.bad ? 'bad' : ''));
+      if(auto.route) openRoute(ch.path);
+      resolve(auto);
+      return;
+    }
+    var box = el('choicebox');
+    box.innerHTML = '';
+    var q = document.createElement('div');
+    q.className = 'cq';
+    q.textContent = '❓ ' + ch.q;
+    box.appendChild(q);
+    ch.opts.forEach(function(o){
+      var ok = !o.c || Object.keys(o.c).every(function(k){ return S[k] >= o.c[k]; });
+      var b = document.createElement('button');
+      b.className = 'choicebtn' + (ok ? '' : ' locked') + (o.route ? ' secret' : '');
+      b.innerHTML = (o.route && ok ? '<span class="sk">✦</span> ' : '') + o.t
+                  + (ok ? '' : ' <span class="lock">(需要 ' + reqText(o.c) + ')</span>');
+      b.disabled = !ok;
+      if(ok){
+        b.onclick = function(){
+          box.innerHTML = '';
+          box.classList.add('off');
+          S.usedC.add(ch);
+          if(o.e) applyEffect(o);
+          put('<span class="picked">你的选择:' + o.t + '</span>', 'tap');
+          put('· ' + o.r, o.good ? 'good' : (o.bad ? 'bad' : ''));
+          if(o.route) openRoute(ch.path);
+          resolve(o);
+        };
+      }
+      box.appendChild(b);
+    });
+    box.classList.remove('off');
+  });
+}
+function pickTier(age){
+  var cands = TIERED.filter(function(x){
+    return !S.usedT.has(x) && age >= x.a[0] && age <= x.a[1];
+  });
+  if(!cands.length) return null;
+  return cands[Math.floor(Math.random()*cands.length)];
+}
+/* 按属性从高到低匹配第一个够得着的档位 */
+function runTier(x){
+  for(var i=0;i<x.tiers.length;i++){
+    var t = x.tiers[i];
+    if(!t.c || Object.keys(t.c).every(function(k){ return S[k] >= t.c[k]; })){
+      if(t.e) applyEffect(t);
+      put('· ' + t.t, t.good ? 'good' : (t.bad ? 'bad' : ''));
+      return;
+    }
+  }
+}
+
+async function runLife(){
+  while(!S.dead){
+    await gate();
+    if(S.dead) break;
+    /* 走上隐藏路线之后,时间不再是"一年一年"地走 —— 一次闭关可能就是好几年 */
+    S.age += S.route
+      ? (ROUTES[S.route].step[0] + Math.floor(Math.random()*(ROUTES[S.route].step[1]-ROUTES[S.route].step[0]+1)))
+      : 1;
+    S.year++;
+    yearLine = 0;
+    updateBar();
+    put('<span class="yr">' + S.age + ' 岁</span>', '');
+    await flushLine();
+
+    /* 人生的关键路口:停下来,让你拿主意 */
+    const ch = pickChoice(S.age);
+    if(ch){
+      put('<span class="yr">—— 该你做决定了 ——</span>', '');
+      await askChoice(ch);
+      updateBar();
+      if(S.health <= 0 && !S.dead){
+        const a1 = await bodyBreak();
+        if(!a1){ await death('病故', '你的身体终于撑不住了。'); return; }
+      }
+      if(S.age >= S.lifespan && !S.dead){
+        await death('寿终正寝', '你在睡梦中平静地离开了这个世界,享年 ' + S.age + ' 岁。');
+        return;
+      }
+      await sleep(skipMode ? 0 : (autoPlay ? (speedFast ? 20 : 180) : 300));
+      continue;
+    }
+
+    /* 同一件事,因为你属性不同,结果完全不同 */
+    let fired = 0;
+    if(!S.route && Math.random() < .4){
+      const tx = pickTier(S.age);
+      if(tx){ S.usedT.add(tx); runTier(tx); fired = 1; }
+    }
+
+    const cands = eligible(S.age);
+    let n = S.age <= 6 ? 1 : (Math.random() < .45 ? 2 : 1);
+
+    for(let i=0; i<n && cands.length; i++){
+      // 幸运天赋:提高好事概率
+      if(S.flags.lucky && Math.random() < .35){
+        const goods = cands.filter(c=>c.good);
+        if(goods.length){
+          const ev = goods[Math.floor(Math.random()*goods.length)];
+          S.used.add(ev);
+          applyEffect(ev);
+          put('🍀 ' + ev.t, 'good');
+          await flushLine();
+          fired++;
+          continue;
+        }
+      }
+      let idx = Math.floor(Math.random()*cands.length);
+      const ev = cands[idx];
+      cands.splice(idx,1);
+      if(ev.p !== undefined && Math.random() > ev.p) continue;
+      S.used.add(ev);
+      applyEffect(ev);
+      const cls = ev.good ? 'good' : (ev.bad ? 'bad' : '');
+      put('· ' + ev.t, cls);
+      await flushLine();
+      fired++;
+      if(ev.die){ await death(ev.dr || '意外', ev.t); return; }
+      if(S.health <= 0){
+        const alive1 = await bodyBreak();
+        if(!alive1){ await death('病故', '你的身体终于撑不住了。'); return; }
+      }
+    }
+    if(fired === 0){
+      const base = S.route ? ROUTES[S.route].daily : (S.age <= 3 ? BABY_DAILY : DAILY);
+      let dp = base.filter(x => !x.a || (S.age >= x.a[0] && S.age <= x.a[1]));
+      if(!dp.length) dp = base;
+      const d = dp[Math.floor(Math.random()*dp.length)];
+      if(d.e) for(const k in d.e){ S[k] += d.e[k]; if(S[k] < 0) S[k] = 0; }
+      put('· ' + d.t, d.good ? 'good' : (d.bad ? 'bad' : ''));
+      await flushLine();
+    }
+    updateBar();
+
+    // 年龄相关的体质自然衰减
+    if(!S.route && S.age > 55 && S.age % 6 === 0 && !S.flags.tough){ S.health -= 1; }
+    if(S.health <= 0 && !S.dead){
+      const alive2 = await bodyBreak();
+      if(!alive2){ await death('寿终', '你的身体走到了尽头。'); return; }
+    }
+    if(S.age >= S.lifespan && !S.dead){
+      await death('寿终正寝', '你在睡梦中平静地离开了这个世界,享年 ' + S.age + ' 岁。');
+      return;
+    }
+    await sleep(skipMode ? 0 : (autoPlay ? (speedFast ? 20 : 180) : 300));
+  }
+}
+
+/* 体质归零:先看有没有复活天赋;没有的话是大病一场、折寿,而不是当场暴毙 */
+async function bodyBreak(){
+  if(S.flags.revive && !S.revived){
+    S.revived = true; S.health = 4;
+    put('✦ 你的身体本来已经撑不住了,但那股天赋把你从鬼门关拉了回来。', 'tap');
+    await flushLine();
+    return true;
+  }
+  if(S.age < 72){
+    S.health = 2;
+    S.lifespan = Math.min(S.lifespan, S.age + 3 + Math.floor(Math.random()*6));
+    put('⚠ 你大病一场,元气大伤,身子骨从此垮了。', 'bad');
+    await flushLine();
+    return true;
+  }
+  return false;
+}
+
+async function death(reason, text){
+  S.dead = true;
+  S.deathReason = reason;
+  put('☠ ' + text, 'die');
+  await flushLine();
+  put('<span class="die">你死了(' + reason + '),享年 ' + S.age + ' 岁。</span>', 'die');
+  await flushLine();
+  await sleep(500);
+  finalReport();
+}
+
+/* ---------- 结算 ---------- */
+function finalReport(){
+  const c = Math.max(0,S.charm), i = Math.max(0,S.intel),
+        h = Math.max(0,S.health), w = Math.max(0,S.wealth);
+  const total = c+i+h+w;
+  let title, comment;
+  if(S.route){
+    /* 走上了隐藏路线,用的是那条路自己的评价体系 */
+    const R = ROUTES[S.route];
+    title = R.titles[0][1];
+    for(let ti=0; ti<R.titles.length; ti++){
+      /* 这条路不看综合评分,看的是你走了多远 */
+      if(S.age >= R.titles[ti][0]) title = R.titles[ti][1];
+    }
+    comment = '这是你在' + R.name.replace(/\s/g,'') + '这条路上走完的一生。这条路上没有别人,只有你自己。';
+  }
+  else if(S.god){
+    /* 开挂模式用的是另一本账 */
+    if(S.age < 18){ title='挂还没开热'; comment='这挂给你,算是白瞎了。'; }
+    else if(total >= 290){ title='神话般的一生'; comment='后来的人提起你,用的词是"传说"。'; }
+    else if(total >= 265){ title='离谱的一生'; comment='这辈子过得,剧本都不敢这么写。'; }
+    else if(total >= 240){ title='开得还算成功'; comment='该有的都有了,就是没到封神的地步。'; }
+    else if(total >= 215){ title='挂开得有点随意'; comment='金手指是真给了,你用得比较随便。'; }
+    else { title='挂着开着就忘了'; comment='一路顺风顺水,你甚至忘了自己开过挂。'; }
+  }
+  else if(S.age < 18){ title='未及成年'; comment='还没来得及长大,一切都结束了。'; }
+  else if(total >= 80){ title='传奇的一生'; comment='你几乎拿到了命运给的所有东西。'; }
+  else if(total >= 70){ title='精彩的一生'; comment='这辈子过得比大多数人都值。'; }
+  else if(total >= 61){ title='安稳的一生'; comment='没什么大起大落,过得还算踏实。'; }
+  else if(total >= 52){ title='普通的一生'; comment='跟街上的大多数人一样,平平淡淡。'; }
+  else { title='蹉跎的一生'; comment='命运好像一直没站在你这边。'; }
+
+  const gifts = picked.map(x=>pool[x].n).join(' · ');
+  const routeLine = S.route
+    ? '<span style="color:' + ROUTES[S.route].color + ';font-size:13px">' +
+      ROUTES[S.route].icon + ' 隐藏路线 · ' + ROUTES[S.route].name.replace(/\s/g,'') + '</span><br>'
+    : '';
+  const gkLine = (S.god && S.gkObj)
+    ? '<span style="color:#ffc038;font-size:13px">金手指:' + S.gkObj.n.replace(/\s/g,'') + '</span><br>'
+    : '';
+  el('endbox').innerHTML =
+      '<div class="big" style="color:#ffd977">'+title+'</div>'
+    + '<div class="rank">'
+    +   routeLine
+    +   gkLine
+    +   '享年 <span class="kw">'+S.age+'</span> 岁'
+    +   ' <span style="color:#8f9ab8;font-size:13px">('+(S.deathReason||'寿终')+')</span><br>'
+    +   '颜值 <span class="kw">'+c+'</span> · 智力 <span class="kw">'+i+'</span> · '
+    +   '体质 <span class="kw">'+h+'</span> · 家境 <span class="kw">'+w+'</span><br>'
+    +   '综合评分 <span class="kw">'+total+'</span><br>'
+    +   '<span style="color:#98a2bd;font-size:13px">天赋:'+gifts+'</span>'
+    + '</div>'
+    + '<div style="margin-top:14px;color:#b9c0d4">'+comment+'</div>';
+  show('s-end');
+}
+
+/* ---------- 控制 ---------- */
+function toggleSpeed(){
+  speedFast = !speedFast;
+  el('speedbtn').textContent = speedFast ? '变 慢' : '加 速';
+}
+function skipToEnd(){
+  skipMode = true;
+  el('speedbtn').textContent = '已加速';
+  el('speedbtn').disabled = true;
+  el('taprow').classList.add('off');
+  tapAdvance();
+}
+</script>
+</body>
+</html>

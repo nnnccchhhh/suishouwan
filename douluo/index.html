@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>斗罗人生 · 转盘</title>
+<style>
+/* =========================================================
+   斗罗人生 · 转盘
+   一年一转。等级会涨会掉,每十级转一次魂环,猎到稀有魂兽可能爆魂骨,
+   转到「机遇」就开一个机遇盘。年份按剧情需要跳。
+   ========================================================= */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:#fff;color:#111;
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+  display:flex;justify-content:center;padding:16px 14px 44px;
+  -webkit-font-smoothing:antialiased;
+}
+.page{width:100%;max-width:660px}
+
+.ntitle{text-align:center;font-size:32px;font-weight:900;letter-spacing:2px;min-height:44px;line-height:44px}
+.ntitle.sm{font-size:21px;letter-spacing:1px}
+
+.stats{display:flex;gap:14px;align-items:baseline;margin:4px 0 2px;flex-wrap:wrap}
+.who{font-size:15px;font-weight:900;background:#111;color:#fff;padding:3px 12px;border-radius:999px}
+.pow{font-size:14px;font-weight:800;color:#777}
+
+/* HUD */
+.hud{margin:8px 0 0}
+.hud1{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hud1 .yr{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.hud1 .yr em{font-style:normal;font-size:12px;font-weight:800;color:#aaa;margin-left:3px}
+.hud1 .lv{font-size:15px;font-weight:900;background:#111;color:#fff;padding:3px 11px;border-radius:999px}
+.hud1 .age{font-size:12.5px;font-weight:800;color:#8a8a96}
+.hud1 .rings{display:flex;gap:4px;align-items:center}
+.hud1 .rg{display:inline-block;width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2)}
+.hud2{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;min-height:20px}
+.tag{font-size:11.5px;font-weight:800;background:#f2f2f5;border:1.5px solid #e3e3e9;color:#555;padding:2px 9px;border-radius:999px}
+.tag.gold{background:#fdf6e3;border-color:#e6cf8a;color:#9a7b1a}
+.tag.hot{background:#111;border-color:#111;color:#fff}
+
+.poolwrap{text-align:center;margin-top:9px}
+.poolname{display:inline-block;font-size:13px;font-weight:900;color:#666;background:#f6f6f8;border:1.5px dashed #dcdce2;border-radius:999px;padding:5px 15px;letter-spacing:.5px}
+
+/* 转盘 */
+.wheelwrap{position:relative;width:100%;max-width:540px;margin:10px auto 0;aspect-ratio:1/1}
+.wheelwrap canvas{width:100%;height:100%;display:block}
+.hub{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:20%;height:20%;border-radius:50%;background:#fff;border:none;padding:0;
+  box-shadow:0 0 0 6px rgba(255,255,255,.92),0 4px 18px rgba(0,0,0,.16);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;transition:transform .12s;
+}
+.hub:hover{transform:translate(-50%,-50%) scale(1.06)}
+.hub:active{transform:translate(-50%,-50%) scale(.96)}
+.hub.gone{pointer-events:none;opacity:.3}
+.hub svg{width:46%;height:46%;margin-left:8%}
+
+/* 结果 */
+.res{margin:16px 0 0;padding:14px 16px;border-radius:14px;background:#f6f6f8;border-left:6px solid #111;font-size:15.5px;line-height:1.85;font-weight:700;display:none}
+.res.on{display:block}
+.res .k{font-size:13px;font-weight:900;color:#888;display:block;margin-bottom:3px;letter-spacing:1px}
+.res .deltas{margin-top:9px;display:flex;gap:9px;flex-wrap:wrap;font-size:13px}
+.res .deltas b{padding:2px 9px;border-radius:999px;background:#fff;border:1.5px solid #e3e3e9}
+.res .deltas b.up{background:#eef7ef;border-color:#bfe0c5;color:#2c7a3d}
+.res .deltas b.down{background:#fdeeee;border-color:#eec2c2;color:#b3302c}
+.res .deltas b.ring{background:#f6f2fd;border-color:#d8c8f5;color:#6b3fbb}
+.res .deltas b.time{background:#fff8e8;border-color:#eeddb0;color:#8a6a10}
+
+/* 按钮 */
+.under{display:flex;justify-content:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+.btn{border:2.5px solid #111;background:#fff;color:#111;font-family:inherit;font-size:16px;font-weight:900;letter-spacing:2px;padding:11px 30px;border-radius:999px;cursor:pointer;transition:.12s}
+.btn:hover{background:#111;color:#fff}
+.btn.solid{background:#111;color:#fff}
+.btn.solid:hover{background:#333;border-color:#333}
+
+/* 剧情簿 */
+.log{margin-top:22px;border-top:2px solid #eee;padding-top:12px;max-height:230px;overflow-y:auto}
+.log .r{font-size:14px;line-height:1.75;padding:5px 0;color:#444;display:flex;gap:9px}
+.log .r b{font-weight:900;color:#111;flex-shrink:0}
+.log .r .t{color:#aaa;font-weight:800;flex-shrink:0;min-width:52px}
+.log .r.god b{color:#b8860b}
+.log .r.dead b{color:#c0392b}
+.hint{text-align:center;color:#bbb;font-size:13px;margin-top:14px;line-height:1.8}
+
+/* 结局 */
+.end{text-align:center;padding:26px 8px}
+.end .big{font-size:40px;font-weight:900;letter-spacing:4px;margin-bottom:10px}
+.end .big.good{color:#b8860b}
+.end .big.bad{color:#c0392b}
+.end .sub{font-size:16px;font-weight:800;color:#777;margin-bottom:20px}
+.end .body{font-size:15.5px;line-height:2;text-align:left;background:#f6f6f8;border-radius:14px;padding:18px}
+.end .body li{margin-left:20px}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="ntitle" id="ntitle">？？？</div>
+  <div class="stats">
+    <span class="who" id="who">不知身在何处</span>
+    <span class="pow" id="pow"></span>
+  </div>
+  <div class="hud" id="hud"></div>
+  <div class="poolwrap" id="poolwrap"></div>
+
+  <div class="wheelwrap" id="wrap">
+    <canvas id="cv"></canvas>
+    <button class="hub" id="hub"><svg viewBox="0 0 100 100"><path d="M28 14 L86 50 L28 86 Z" fill="#111"/></svg></button>
+  </div>
+
+  <div class="res" id="res"></div>
+  <div class="under" id="under"></div>
+  <div class="log" id="log"></div>
+  <div class="hint" id="hint">点中间的 ▶ 转一次</div>
+</div>
+
+<script>
+/* =========================================================
+   一、引 擎
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const PALETTE = ['#E24B45','#E8823A','#E0B33A','#45A85B','#2FA79F','#4A72DB','#9A50D2','#E0518F'];
+
+/* 等级称号 */
+const TITLES = [[91,'封号斗罗'],[81,'魂斗罗'],[71,'魂圣'],[61,'魂帝'],[51,'魂王'],[41,'魂宗'],[31,'魂尊'],[21,'大魂师'],[11,'魂师'],[1,'魂士']];
+const BEAST_T = [[91,'百万年魂兽'],[71,'十万年魂兽'],[51,'万年魂兽'],[31,'千年魂兽'],[11,'百年魂兽'],[1,'十年魂兽']];
+const titleOf = lv => {
+  const b = S && S.beast;
+  /* 魂兽没有"等级" —— 它的层次看【修为】,不看年龄 */
+  if (b){
+    const x = S.xiu || 0;
+    if (x >= 1000000) return '百万年魂兽';
+    if (x >= 100000)  return '十万年魂兽';
+    if (x >= 10000)   return '万年魂兽';
+    if (x >= 1000)    return '千年魂兽';
+    if (x >= 100)     return '百年魂兽';
+    return '十年魂兽';
+  }
+  for (const [n, s] of TITLES) if (lv >= n) return s;
+  return '魂士';
+};
+
+/* 魂兽:每过一年能涨多少【修为年数】。修为越高,长得越快(所以修为会跑在年龄前面)。
+   例:十年档每过 1 年涨 1 点修为系数 —— 过 10 年就是 +100 修为,直接够到百年。 */
+function xiuMult(x){
+  if (x < 100)     return 1;
+  if (x < 1000)    return 2;
+  if (x < 10000)   return 3;
+  if (x < 100000)  return 4;
+  if (x < 1000000) return 5;
+  return 6;
+}
+
+/* 一次最多涨"半个档位" —— 免得一个奇遇从百年直接跳到千年 */
+function xiuCap(x){
+  return Math.pow(10, Math.floor(Math.log10(Math.max(10, x))) + 1) / 2;
+}
+/* 魂环颜色:白 / 黄 / 紫 / 黑 / 红 */
+const RINGC = {'十年':'#fafafa','百年':'#E0B33A','千年':'#9A50D2','万年':'#2b2b2b','十万年':'#E24B45'};
+
+let S = {}, cur = null, segs = [], rot = 0, winner = -1, spinning = false, over = false;
+let snap = null, canRespin = false, rerollLeft = 0;
+
+/* ---------- 数字 ---------- */
+function fmtY(y){
+  if (y >= 1e8) return (y/1e8).toFixed(2).replace(/\.?0+$/,'') + '亿';
+  if (y >= 1e4) return (y/1e4).toFixed(y % 1e4 ? 1 : 0).replace(/\.?0+$/,'') + '万';
+  return String(Math.round(y));
+}
+const isHot = t => /龙|冰帝|法则|领域|神|双生|昊天|蓝银|异种|雪原之子|飞升|魂骨|魂灵|传承/.test(t);
+
+/* ---------- HUD ---------- */
+function renderHUD(){
+  const h = $('hud'); if (!h) return;
+  let rings = '';
+  for (let k = 0; k < 9; k++){
+    const r = S.rings[k];
+    rings += '<i class="rg" style="background:' + (r ? (RINGC[r.y] || '#888') : '#e8e8ee') + '" title="' + (r ? r.y + '魂环' : '空') + '"></i>';
+  }
+  const tags = [];
+  if (S.sex) tags.push('<span class="tag sex">' + S.sex + '</span>');
+  if (S.bones) tags.push('<span class="tag gold">' + (S.beast ? '兽骨' : '魂骨') + ' ×' + S.bones + '</span>');
+  if (S.spirits.length) tags.push('<span class="tag hot">魂灵 · ' + S.spirits.join('、') + '</span>');
+  S.tags.filter(t => t !== S.sex).slice(-5).forEach(t => tags.push('<span class="tag' + (isHot(t) ? ' gold' : '') + '">' + t + '</span>'));
+
+  h.innerHTML =
+      '<div class="hud1">'
+    +   (S.beast
+          ? '<span class="yr">' + fmtY(S.xiu || 10) + '<em>年修为</em></span>'
+            + '<span class="lv">' + titleOf(0) + '</span>'
+            + '<span class="age">活了 ' + fmtY(S.year) + ' 岁</span>'
+          : '<span class="yr">' + S.year + '<em>岁</em></span>'
+            + '<span class="lv">' + S.lv + ' 级 · ' + titleOf(S.lv) + '</span>'
+            + '<span class="rings">' + rings + '</span>')
+    + '</div>'
+    + '<div class="hud2">' + tags.join('') + '</div>';
+}
+
+/* ---------- 画盘 ---------- */
+/* 性别盘:人线是"男/女",兽线是"雄/雌" —— 魂兽不用男女的说法 */
+function sexSegs(beast){
+  return beast ? [
+    {w:44, t:'雄', r:'一头公兽。', to:'ORIGIN', set:{sex:'雄', tags:['雄']}},
+    {w:44, t:'雌', r:'一头母兽。', to:'ORIGIN', set:{sex:'雌', tags:['雌']}},
+    {w:7,  lb:'雌雄同体', t:'双性 —— 雌雄同体', r:'两套都在你身上。兽群里也不常见。', to:'ORIGIN', set:{sex:'双性', tags:['双性']}},
+    {w:5,  lb:'无性', t:'无性 —— 不分雌雄', r:'你既不是公的也不是母的。同类见了你会绕开。', to:'ORIGIN', set:{sex:'无性', tags:['无性']}}
+  ] : null;
+}
+/* req:'某标签' 的格子只有身上有该标签时才出现(性别/化形等专属剧情) */
+function pickSegs(id, n){
+  let L = n.segs;
+  if (id === 'RING') L = ringSegs(S.lv);
+  else if (id === 'BMILE') L = bmileSegs(S.xiu || 10);
+  else if (id === 'sex'){ const b = sexSegs(S.beast); if (b) L = b; }
+  const ok = t => !t || S.tags.indexOf(t) >= 0;
+  const f = L.filter(s => ok(s.req));
+  return f.length ? f : L;
+}
+
+function paint(seg){
+  segs = seg.map((s, i) => ({ ...s, c: s.c || PALETTE[i % PALETTE.length], w: s.w || 1 }));
+  const tot = segs.reduce((a, s) => a + s.w, 0);
+  let acc = 0;
+  segs.forEach(s => { s.from = acc / tot * 360; acc += s.w; s.deg = s.w / tot * 360; });
+}
+
+function drawDial(cv, list, rotDeg, win){
+  const ctx = cv.getContext('2d');
+  const W = cv.width, R = W/2, cx = R, cy = R;
+  /* 高清屏:画布实际像素是 CSS 尺寸的 dpr 倍,所有"绝对像素"都要乘 dpr,否则手机上会被放大变糊 */
+  const dpr = cv._dpr || 1;
+  ctx.clearRect(0, 0, W, W);
+  const baseFs = W * (list.length > 5 ? 0.036 : 0.041);
+
+  list.forEach((s, i) => {
+    const a0 = (rotDeg + s.from - 90) * Math.PI/180;
+    const a1 = (rotDeg + s.from + s.deg - 90) * Math.PI/180;
+    const mid = (a0 + a1) / 2;
+
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R-3*dpr, a0, a1); ctx.closePath();
+    ctx.fillStyle = s.c; ctx.fill();
+    if (win === i){ ctx.lineWidth = 7*dpr; ctx.strokeStyle = '#111'; ctx.stroke(); }
+    else { ctx.lineWidth = 2.5*dpr; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke(); }
+
+    const inner = R*0.30, outer = R*0.955, span = outer - inner;
+    const arcW = 2 * (R*0.63) * Math.sin(Math.min(Math.PI*0.5, (s.deg*Math.PI/180)/2));
+    if (arcW < 21*dpr) return;   /* 细缝只留颜色 */
+
+    let text = s.t, f = baseFs;
+    for (let k = 0; k < 16; k++){
+      const p = Math.max(3, Math.floor(span / (f*1.02)));
+      const need = Math.ceil(Array.from(text).length / p);
+      if (need * f * 1.22 <= arcW || f <= W*0.019) break;
+      f *= 0.88;
+    }
+    if (s.lb && f <= W*0.027) text = s.lb;
+    const fs = Math.max(9*dpr, Math.round(f));
+    const per = Math.max(3, Math.floor(span / (fs * 1.02)));
+    const chars = Array.from(text);
+    const lines = [];
+    for (let k = 0; k < chars.length; k += per) lines.push(chars.slice(k, k+per).join(''));
+    for (let k = 1; k < lines.length; k++){
+      while (lines[k].length && ')]),。、;:!?」』'.indexOf(lines[k][0]) >= 0){ lines[k-1] += lines[k][0]; lines[k] = lines[k].slice(1); }
+    }
+    const L = lines.filter(x => x.length);
+
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R-3*dpr, a0, a1); ctx.closePath(); ctx.clip();
+
+    const flip = Math.cos(mid) < 0;
+    const ang = flip ? mid + Math.PI : mid;
+    const lh = fs * 1.22;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.font = '900 ' + fs + 'px "PingFang SC","Microsoft YaHei",sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = flip ? 'left' : 'right';
+    for (let k = 0; k < 2; k++){
+      ctx.fillStyle = k === 0 ? 'rgba(0,0,0,.26)' : '#fff';
+      const d = k === 0 ? 1.6*dpr : 0;
+      L.forEach((ln, j) => {
+        const y = (j - (L.length-1)/2) * lh;
+        ctx.save(); ctx.translate(d, d); ctx.rotate(ang);
+        ctx.fillText(ln, flip ? -outer : outer, y);
+        ctx.restore();
+      });
+    }
+    ctx.restore(); ctx.restore();
+  });
+
+  ctx.beginPath(); ctx.arc(cx, cy, W*0.126, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+}
+
+function fit(){
+  const cv = $('cv');
+  if (!cv || !cv.parentElement) return false;
+  const w = Math.round(cv.parentElement.clientWidth || 520);
+  /* 按屏幕密度放大画布的像素缓冲区 —— 这就是手机上转盘糊的根因 */
+  const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+  cv.width = cv.height = Math.round(w * dpr);
+  cv._dpr = dpr;
+  return true;
+}
+function redraw(){ if (fit()) drawDial($('cv'), segs, rot, winner); }
+
+/* ---------- 魂环盘:稀有魂环的概率随等级提升 ---------- */
+function ringSegs(lv){
+  /* t: 10 级 -> 0(全是白环)   90 级 -> 1(大半是红环) */
+  const t = Math.min(1, Math.max(0, (lv - 10) / 80));
+  const w = (early, late) => Math.max(1, Math.round(early + (late - early) * t));
+  return [
+   {w:w(38,1),  t:'十年魂环(白)',     r:'最普通的那种。至少没出岔子。',    ring:'十年',   to:'YEAR', set:{tags:['十年魂环']}},
+   {w:w(32,5),  t:'百年魂环(黄)',     r:'标准配置,稳稳当当。',            ring:'百年',   to:'YEAR', set:{tags:['百年魂环']}},
+   {w:w(15,15), t:'千年魂环(紫)',     r:'你越级了,而且扛住了。',          ring:'千年', lv:1, to:'YEAR', set:{tags:['千年魂环']}},
+   {w:w(6,33),  t:'万年魂环(黑)',     r:'越了整整两档。你吐了三天的血。',  ring:'万年', lv:2, to:'YEAR', set:{tags:['万年魂环']}},
+   {w:w(1,38),  lb:'十万年魂环', t:'十万年魂环(红)', r:'那东西认了你。没人敢信。', ring:'十万年', lv:4, to:'YEAR', set:{tags:['十万年魂环']}},
+   {w:w(6,7),   t:'吸收失败,魂力倒退', r:'你在床上躺了一年。',             lv:-1, to:'YEAR', set:{tags:['吸收失败过']}},
+   {w:w(2,2),   t:'猎到的魂兽年限不够', r:'你只能拿它凑数。',              ring:'十年',   to:'YEAR'},
+   {w:Math.round(t*t*4), lb:'魂环里住着东西', t:'你吸收的魂环里,住着一个魂灵', r:'它开口说了话。', ring:'万年', spirit:'环中魂灵', lv:3, to:'YEAR'}
+  ].filter(s => s.w > 0);
+}
+
+/* ---------- 魂兽的里程碑:每跨过一个"年限刻度"就进阶一次(魂兽不吸魂环) ---------- */
+function bmileStep(y){ return Math.pow(10, Math.floor(Math.log10(Math.max(1, y)))); }
+function bmileSegs(y){
+  /* t: 十年档 -> 0   十万年以上 -> 1   —— 越老越可能摸到血脉/领域/魂骨 */
+  const t = Math.min(1, Math.max(0, (Math.log10(Math.max(10, y)) - 1.3) / 3.7));
+  const w = (a, b) => Math.max(1, Math.round(a + (b - a) * t));
+  const L = [
+   {w:w(30,10), t:'你的体魄又壮了一分',   r:'筋骨更硬,咬合更狠。',              lv:1, to:'YEAR'},
+   {w:w(26,12), t:'你的皮更厚了',         r:'刀砍上去只留一道白印。',            lv:1, to:'YEAR'},
+   {w:w(16,14), t:'你觉醒了本命的东西',   r:'这不是学来的,是生下来就有的。',    lv:2, to:'YEAR', set:{tags:['本命之技']}},
+   {w:w(10,16), t:'你身上长出一块兽骨',   r:'它比别处都硬。',                    bone:1, lv:1, to:'YEAR'},
+   {w:w(6,18),  t:'你把一头同阶的吞了',   r:'它的年限全归了你。',                lv:3, to:'YEAR', set:{tags:['吞过同阶']}},
+   {w:w(5,12),  t:'你开了智',             r:'你开始听得懂人话 —— 也听得懂谎话。', lv:2, to:'YEAR', set:{tags:['开过智']}},
+   {w:w(2,10),  t:'人类盯上了你的魂环',   r:'他们要的就是这个 —— 虽然你现在这圈还不值钱。', lv:-2, to:'YEAR', set:{tags:['被人盯上']}},
+   {w:w(1,4),   t:'你没跨过这道坎',       r:'你倒在了自己的领地上。',            to:'end_dead'}
+  ];
+  if (y >= 1000) L.push({w:Math.round(4 + 10 * t), lb:'领域', t:'你张开了一片自己的领域', r:'这片地方,从今天起谁进来谁死。', lv:4, to:'YEAR', set:{tags:['有领域']}});
+  if (y >= 5000) L.push({w:Math.round(3 + 8 * t), lb:'天劫', t:'天劫在你头上聚了三个月', r:'你扛下来了,也换了一副骨头。', bone:1, lv:5, to:'YEAR', set:{tags:['扛过天劫']}});
+  if (y >= 100000 && !S.hxTried) L.push({w:22, lb:'化 形', t:'你要不要化形成人', r:'这一步踏出去,就回不来了。', to:'huaxing'});
+  return L.filter(s => s.w > 0);
+}
+
+/* ---------- 年度盘的分段:按年龄/年限/等级切换 ---------- */
+function yearWheel(){
+  const y = S.year;
+  if (S.beast){
+    const x = S.xiu || 10;   /* 魂兽按【修为】分档,不按年龄 */
+    if (x < 100) return 'by_1';
+    if (x < 1000) return 'by_2';
+    if (x < 10000) return 'by_3';
+    if (x < 100000) return 'by_4';
+    if (x < 1000000) return 'by_5';
+    return 'by_6';
+  }
+  /* 99 级满级之后:整个转盘都围绕神位 */
+  if (S.hx && S.year <= 40) return 'y_hx';   /* 刚化形的那些年,走"化形者"专属盘 */
+  if (S.lv >= 99) return 'y_god';
+  if (y <= 12) return 'y_child';
+  if (y <= 18) return 'y_teen';
+  if (y <= 30) return 'y_young';
+  if (y <= 50) return 'y_prime';
+  if (y <= 70) return 'y_mid';
+  return 'y_old';
+}
+
+/* ---------- 过一年 ---------- */
+/* 开局那几转不算时间(你还没出生 / 刚出生) */
+const NOTIME = { start:1, sex:1, origin_h:1, origin_b:1,
+  h_fish:1, h_smith:1, h_hall:1, h_sect:1, h_hunter:1, h_genius:1, h_fallen:1,
+  b_north:1, b_forest:1, b_deep:1, b_vol:1 };
+/* 这些是"插进来的子盘"(机遇/猎杀/魂环/进阶/化形):转进去的那一下不算时间,
+   时间由子盘自己的结果算 —— 否则一年里连开三个子盘,年龄就白涨三岁 */
+const SUBWHEEL = { oppA:1, oppB:1, oppC:1, oppD:1, oppE:1, huntA:1, huntB:1, huntC:1,
+  b_oppA:1, b_oppB:1, b_oppC:1, b_hunt:1, RING:1, BMILE:1, huaxing:1 };
+
+function nextYear(){
+  if (over) return;
+  /* 年岁在"落格"那一下就已经走过了(见 land),这里不再加 —— 只负责往前推一格 */
+  S.jump = 0; S.skip = 1;
+  /* 寿限:魂师随等级走;魂兽随修为走(涨得比年龄快,所以能活很久) */
+  /* 魂兽的寿限给得很宽 —— 修为按比例涨,年龄永远追不上;
+     魂兽的"老死"交给正文里的"寿元到了"那一格,不由公式卡死 */
+  S.life = S.beast ? Math.floor(400 + (S.xiu || 10) * 0.09) : (78 + Math.floor(S.lv * 0.9));
+  if (S.year > S.life) return showEnd(NODES[S.beast ? 'end_beast_old' : 'end_old']);
+  /* 里程碑:魂师每十级吸一个魂环;魂兽不吸魂环,改成每跨一个年限刻度进阶一次 */
+  if (S.beast){
+    /* 修为进阶盘:每跨一个刻度来一次,但至少隔 3 个"年月盘"再来,免得刷屏 */
+    S.sinceMile = (S.sinceMile || 0) + 1;
+    const x = S.xiu || 10, from = S.mileAt || 10;
+    const st = bmileStep(from), nx = Math.floor(from / st) * st + st;
+    if (x >= nx && S.sinceMile >= 3){
+      S.mileAt = nx; S.sinceMile = 0;
+      return goTo('BMILE');
+    }
+    S.mileAt = x;
+  } else if (S.rings.length < 9 && S.lv >= (S.rings.length + 1) * 10 && S.lastRingAt !== S.lv){
+    S.lastRingAt = S.lv;
+    return goTo('RING');
+  }
+  goTo(yearWheel());
+}
+
+/* ---------- 去一个节点 ---------- */
+function goTo(id){
+  if (over) return;
+  if (id === 'YEAR') return nextYear();
+  if (id === 'ORIGIN') return goTo(S.beast ? 'origin_b' : 'origin_h');
+  const n = NODES[id];
+  if (!n){ console.error('没有这个节点:', id); return; }
+  if (n.end) return showEnd(n);
+
+  cur = id; winner = -1; spinning = false; rot = 0;
+  snap = null; canRespin = false; rerollLeft = 3;
+  paint(pickSegs(id, n));
+  if (typeof n.y0 === 'number' && n.y0 > S.year) S.year = n.y0;
+
+  /* 魂兽的年月盘:标题跟着【修为】走,不要写死成"百年魂兽" */
+  let dynTitle = /^by_/.test(id) ? (titleOf(0) + ' · 又 过 了 些 年') : n.title;
+  if (id === 'sex' && S.beast) dynTitle = '雌 还 是 雄';
+  $('ntitle').textContent = dynTitle;
+  $('ntitle').className = 'ntitle' + (n.title.replace(/\s/g,'').length > 8 ? ' sm' : '');
+  $('who').textContent = S.who || n.who || '';
+  $('pow').textContent = n.pow || S.pow || '';
+  $('res').className = 'res';
+  $('under').innerHTML = '';
+  let kind = n.kind || '';
+  if (id === 'RING') kind = '第 ' + (S.rings.length + 1) + ' 个魂环 · ' + S.lv + ' 级';
+  if (id === 'BMILE') kind = '修 为 ' + (S.xiu >= 10000 ? (S.xiu / 10000) + ' 万 年' : Math.floor(S.xiu || 10) + ' 年') + ' · 进 阶';
+  if (/^by_/.test(id)) kind = '修 为 ' + fmtY(S.xiu || 10) + ' 年 · 每 转 一 次 就 是 一 段 年 月';
+  if (id === 'y_god') kind = '99 级 · 满 级 之 后';
+  $('poolwrap').innerHTML = kind ? '<div><span class="poolname">' + kind + '</span></div>' : '';
+  $('hint').innerHTML = n.text ? n.text : '点中间的 ▶ 转一次';
+  if (id === 'sex' && S.beast) $('hint').innerHTML = '第二转:性别。<br>兽群里说的是<b>雌</b>和<b>雄</b> —— 另外两种更罕见。';
+  $('hub').classList.remove('gone');
+  renderHUD();
+  redraw();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- 转 ---------- */
+function spin(canAgain){
+  if (spinning || over || winner >= 0) return;
+  canRespin = !!canAgain;
+  snap = canRespin
+    ? { year:S.year, lv:S.lv, rings:S.rings.slice(), bones:S.bones, spirits:S.spirits.slice(),
+        tags:S.tags.slice(), who:S.who, pow:S.pow, steps:S.steps.length, life:S.life,
+        logLen:$('log').children.length, lastRingAt:S.lastRingAt, godAt:S.godAt, beast:S.beast,
+        sex:S.sex, mileAt:S.mileAt, hx:S.hx, hxTried:S.hxTried, hxDone:S.hxDone, sinceMile:S.sinceMile, xiu:S.xiu, jump:S.jump, adv:S.adv }
+    : null;
+  spinning = true;
+  $('hub').classList.add('gone');
+  $('hint').textContent = '转盘在转……';
+
+  const tot = segs.reduce((a, s) => a + s.w, 0);
+  let roll = Math.random() * tot, idx = segs.length - 1;
+  for (let i = 0; i < segs.length; i++){ roll -= segs[i].w; if (roll <= 0){ idx = i; break; } }
+
+  const want = -(segs[idx].from + segs[idx].deg / 2);
+  const c = ((rot % 360) + 360) % 360;
+  const turns = 5 + Math.floor(Math.random()*3);
+  const from = rot;
+  const to = rot + ((want - c + 360) % 360) + 360 * turns;
+
+  const cv = $('cv'), t0 = performance.now();
+  const dur = cur === 'RING' ? 2600 : 2100;
+  const ease = t => 1 - Math.pow(1 - t, 3.4);
+  (function f(now){
+    if (over) return;
+    const t = Math.min(1, (now - t0) / dur);
+    rot = from + (to - from) * ease(t);
+    drawDial(cv, segs, rot, -1);
+    if (t < 1) requestAnimationFrame(f);
+    else { rot = to; land(idx); }
+  })(t0);
+}
+
+/* ---------- 落格 ---------- */
+function land(idx){
+  const s = segs[idx], node = NODES[cur];
+  winner = idx; spinning = false;
+  drawDial($('cv'), segs, rot, idx);
+
+  /* 条件重抽 */
+  if (s.savedBy && S.tags.indexOf(s.savedBy) >= 0 && rerollLeft > 0){
+    rerollLeft--;
+    $('res').className = 'res on';
+    $('res').innerHTML = '<span class="k">重 抽</span>你身上有「' + s.savedBy + '」—— 这一格作废,再抽一次。';
+    $('under').innerHTML = '<button class="btn solid" id="rr">重 抽 ↻</button>';
+    $('rr').onclick = () => { winner = -1; $('res').className = 'res'; $('under').innerHTML = ''; $('hub').classList.remove('gone'); spin(false); };
+    $('hint').textContent = '「' + s.savedBy + '」保了你一次';
+    return;
+  }
+
+  const before = { lv:S.lv, bones:S.bones, rings:S.rings.length, spirits:S.spirits.length, xiu:S.xiu || 0 };
+  const wasBeast = !!S.beast;
+
+  if (s.set){
+    if (s.set.beast !== undefined) S.beast = !!s.set.beast;
+    if (s.set.sex) S.sex = s.set.sex;
+    if (s.set.hx !== undefined) S.hx = !!s.set.hx;
+    if (s.set.xiu !== undefined) S.xiu = s.set.xiu;
+    if (s.set.who) S.who = s.set.who;
+    if (s.set.pow) S.pow = s.set.pow;
+    (s.set.tags || []).forEach(t => { if (S.tags.indexOf(t) < 0) S.tags.push(t); });
+  }
+  if (s.lv)  S.lv = Math.max(1, Math.min(99, S.lv + s.lv));
+  if (s.ring){ S.rings.push({ y:s.ring }); }
+  if (s.bone){ S.bones = Math.min(6, S.bones + s.bone); }
+  if (s.spirit && S.spirits.indexOf(s.spirit) < 0){ S.spirits.push(s.spirit); }
+  S.skip = s.skip || 1;
+  if (typeof s.sy === 'number'){ S.year = s.sy; S.jump = 0; }
+  if (cur === 'huaxing') S.hxTried = 1;
+  /* 化形成人:性别说法跟着从"雌/雄"换成"男/女" */
+  if (wasBeast && !S.beast && (S.sex === '雄' || S.sex === '雌')){
+    const nw = S.sex === '雄' ? '男' : '女';
+    S.tags = S.tags.map(t => t === S.sex ? nw : t);
+    S.sex = nw;
+  }
+  /* 魂兽:段落的 skip 当【修为增长年数】,年龄只涨它的 1/10 —— 所以修为跑在年龄前面 */
+  if (wasBeast && S.beast){
+    if (!S.xiu) S.xiu = 10;
+    const m = xiuMult(S.xiu);
+    const want = (s.skip || 1) * m * (1 + (s.lv || 0) / 10);
+    const g = Math.round(Math.min(want, xiuCap(S.xiu)));
+    S.xiu += g;
+    /* 年龄跟修为按同一个比例走:过 1 年 ≈ 涨 (10×系数) 年修为 */
+    S.adv = Math.max(1, Math.round(g / (10 * m)));
+  } else {
+    S.adv = S.skip;
+  }
+  /* 这一转本身就代表这些年过去了 —— 当场就走,不拖到下一次"过一年"。
+     开局那几个盘不算时间;进子盘的那一下也不算(时间由子盘自己的结果算)。
+     字幕的时间标签只在"时间真的走了"时才显示,这样两边永远是同一个数。 */
+  const timeRuns = !NOTIME[cur];
+  if (timeRuns) S.year += S.adv;
+
+  S.steps.push({ t:node.title.replace(/\s/g,''), e:s.t, y:S.year, lv:S.lv });
+  $('who').textContent = S.who || '';
+  $('pow').textContent = S.pow || '';
+  renderHUD();
+
+  /* 变化标签 */
+  const d = [];
+  if (wasBeast && S.beast){
+    const dx = Math.round((S.xiu || 0) - before.xiu);
+    if (dx) d.push('<b class="' + (dx > 0 ? 'up' : 'down') + '">修为 ' + (dx > 0 ? '+' : '') + dx + ' 年</b>');
+  } else if (S.lv !== before.lv){
+    d.push('<b class="' + (S.lv > before.lv ? 'up' : 'down') + '">等级 ' + (S.lv > before.lv ? '+' : '') + (S.lv - before.lv) + ' → ' + S.lv + '</b>');
+  }
+  if (S.rings.length > before.rings) d.push('<b class="ring">获得 ' + s.ring + '魂环</b>');
+  if (S.bones > before.bones) d.push('<b class="up">' + (S.beast ? '兽骨' : '魂骨') + ' +' + (S.bones - before.bones) + '</b>');
+  if (S.spirits.length > before.spirits) d.push('<b class="up">魂灵 · ' + s.spirit + '</b>');
+  /* 用"这一段实际推进的年岁"(S.adv),不要用段落里写的原值 ——
+     魂兽那两个数不一样(段落年数是修为基数,年龄只走它的 1/(10×系数)) */
+  if (timeRuns){
+    if (wasBeast && S.beast){
+      if (S.adv > 1) d.push('<b class="time">年龄 +' + S.adv + ' 岁</b>');
+    } else if (S.adv > 1){
+      d.push('<b class="time">时间跳了 ' + S.adv + ' 年</b>');
+    }
+  }
+
+  $('res').className = 'res on';
+  $('res').innerHTML = '<span class="k">转 到 了</span>' + s.t + '<br>' + s.r
+    + (d.length ? '<div class="deltas">' + d.join('') + '</div>' : '');
+  logAdd(node.title, s.t, s.r, s.to, S.year, S.lv);
+
+  /* 按钮 */
+  const rs = canRespin ? '<button class="btn" id="rs">↺ 重 转 这 一 格</button>' : '';
+  const dest = s.to || 'YEAR';
+  if (dest === 'YEAR'){
+    $('under').innerHTML = '<button class="btn solid" id="nx">过 一 年 ▸</button>' + rs;
+    $('hint').textContent = '过完这一年,又是新的一年';
+  } else if (dest === 'YEAR2'){
+    $('under').innerHTML = '<button class="btn solid" id="nx">再 过 一 年 ▸</button>' + rs;
+  } else {
+    $('under').innerHTML = '<button class="btn solid" id="nx">继 续 ▸</button>' + rs;
+    $('hint').textContent = '这一格的后头,连着一个新的转盘';
+  }
+  $('nx').onclick = () => goTo(dest === 'YEAR2' ? 'YEAR' : dest);
+  if (canRespin) $('rs').onclick = reSpin;
+}
+
+/* ---------- 重转 ---------- */
+function reSpin(){
+  if (spinning || winner < 0 || !snap) return;
+  S.year = snap.year; S.lv = snap.lv; S.rings = snap.rings.slice();
+  S.bones = snap.bones; S.spirits = snap.spirits.slice(); S.tags = snap.tags.slice();
+  S.who = snap.who; S.pow = snap.pow; S.life = snap.life; S.lastRingAt = snap.lastRingAt;
+  S.godAt = snap.godAt; S.beast = snap.beast;
+  S.sex = snap.sex; S.mileAt = snap.mileAt; S.hx = snap.hx;
+  S.hxTried = snap.hxTried; S.hxDone = snap.hxDone; S.sinceMile = snap.sinceMile;
+  S.jump = snap.jump; S.adv = snap.adv;
+  S.xiu = snap.xiu;
+  S.steps.length = snap.steps;
+  while ($('log').children.length > snap.logLen) $('log').lastChild.remove();
+  winner = -1; snap = null;
+  $('res').className = 'res'; $('under').innerHTML = '';
+  $('hub').classList.remove('gone');
+  renderHUD();
+  spin(false);
+}
+
+/* ---------- 剧情簿 ---------- */
+function logAdd(nodeTitle, t, r, to, year, lv){
+  const d = document.createElement('div');
+  const isEnd = NODES[to] && NODES[to].end;
+  d.className = 'r' + (isEnd ? (NODES[to].kind === 'good' ? ' god' : ' dead') : '');
+  const tm = S.beast ? fmtY(S.xiu || 10) + '年修为' : year + '岁';
+  d.innerHTML = '<span class="t">' + tm + '</span><b>' + t + '</b><span>' + r + '</span>';
+  $('log').appendChild(d);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+/* ---------- 结局 ---------- */
+function showEnd(n){
+  over = true;
+  const path = S.steps.map(x => '<li>' + (S.beast ? fmtY(x.y) + '年' : x.y + '岁') + ' · ' + x.e + '</li>').join('');
+  const tags = S.tags.map(t => '<span class="tag' + (isHot(t) ? ' gold' : '') + '">' + t + '</span>').join(' ');
+  const stat = '<div class="hud2" style="justify-content:center;margin-bottom:16px">'
+             + '<span class="tag hot">' + S.lv + ' 级 · ' + titleOf(S.lv) + '</span>'
+             + '<span class="tag">魂环 ×' + S.rings.length + '</span>'
+             + (S.bones ? '<span class="tag gold">魂骨 ×' + S.bones + '</span>' : '')
+             + (S.spirits.length ? '<span class="tag hot">魂灵 · ' + S.spirits.join('、') + '</span>' : '')
+             + tags + '</div>';
+  document.querySelector('.page').innerHTML =
+      '<div class="end">'
+    +   '<div class="big ' + n.kind + '">' + n.title + '</div>'
+    +   '<div class="sub">' + n.sub + '</div>'
+    +   stat
+    +   '<div class="body">' + n.body.replace('{path}', '<ul>' + path + '</ul>') + '</div>'
+    +   '<div class="under"><button class="btn" onclick="location.reload()">重 开 一 生</button></div>'
+    + '</div>';
+  window.scrollTo(0, 0);
+}
+</script>
+<script>
+/* =========================================================
+   二、剧 情 图
+   ========================================================= */
+const NODES = {
+
+/* =========================================================
+   开 局
+   ========================================================= */
+start:{ title:'你 睁 开 眼 睛', who:'不知身在何处', pow:'', y0:6,
+  text:'一睁眼,你不知道自己是谁,也不知道这是哪儿。<br>第一转只有一件事 —— <b>你是人,还是兽。</b>',
+  segs:[
+   {w:58, t:'你是个人',       r:'手是手,脚是脚,摸得到自己的脸。',              to:'sex', set:{beast:false, who:'一个刚出生的人'}},
+   {w:42, t:'你是一头魂兽',   r:'雪灌进鼻子里,冷得钻心 —— 你不是人。',        to:'sex', set:{beast:true,  who:'一头刚出生的魂兽', pow:'魂兽'}}
+  ]},
+
+/* ---------- 第二转:性别 ---------- */
+sex:{ title:'男 还 是 女', who:'', pow:'',
+  text:'第二转:性别。<br>男、女,还有两种很罕见的。',
+  segs:[
+   {w:44, t:'男',   r:'一个男孩。', to:'ORIGIN', set:{sex:'男', tags:['男']}},
+   {w:44, t:'女',   r:'一个女孩。', to:'ORIGIN', set:{sex:'女', tags:['女']}},
+   {w:7,  lb:'双性', t:'双性 —— 雌雄同体', r:'两套都在你身上。这一胎,族里没人见过。', to:'ORIGIN', set:{sex:'双性', tags:['双性']}},
+   {w:5,  lb:'无性', t:'无性 —— 不分男女', r:'你既不是男的也不是女的。他们不知道该怎么养你。', to:'ORIGIN', set:{sex:'无性', tags:['无性']}}
+  ]},
+
+/* ---------- 第三转:身份(人 / 兽各一个盘) ---------- */
+origin_h:{ title:'你 出 生 在 哪', who:'', pow:'',
+  text:'第三转:身份。<br>格子越大越常见,格子越小越罕见。',
+  segs:[
+   {w:20, t:'海边渔村的孩子',     r:'潮声一阵一阵,咸味很重。',       to:'h_fish',   set:{who:'海边渔村的孩子'}},
+   {w:18, t:'铁匠铺的儿子',       r:'炉子还没熄,锤子就搁在枕边。',   to:'h_smith',  set:{who:'铁匠铺的儿子'}},
+   {w:16, t:'武魂殿分殿的孤儿',   r:'你醒在柴房里,身上盖着草。',     to:'h_hall',   set:{who:'武魂殿分殿的孤儿'}},
+   {w:13, t:'七宝琉璃宗的小姐',   r:'你醒来时,有人在给你盖被子。',   to:'h_sect',   set:{who:'七宝琉璃宗的小姐'}},
+   {w:10, t:'猎户家的孩子',       r:'墙上挂着一把弓,和你一样高。',   to:'h_hunter', set:{who:'猎户家的孩子'}},
+   {w:8,  t:'蓝电霸王龙家的孩子', r:'你家的门槛,别人不敢踩。',       to:'h_genius', set:{who:'蓝电霸王龙家的孩子'}},
+   {w:6,  t:'被人丢掉的野孩子',   r:'你被放在一座小庙门口,没人留名字。', to:'h_fallen', set:{who:'被丢掉的孩子'}},
+   {w:2,  lb:'昊天宗遗孤', t:'昊天宗的遗孤', r:'整个宗门,只剩你一个还姓唐。', to:'h_genius', set:{who:'昊天宗的遗孤', tags:['昊天宗遗孤']}}
+  ]},
+
+origin_b:{ title:'你 是 什 么 兽', who:'', pow:'魂兽',
+  text:'第三转:身份。<br>魂兽也分很多种 —— 差别比人还大。',
+  segs:[
+   {w:30, t:'极北之地的一头野狗',     r:'雪原上没人管你,也没人喂你。',   to:'b_north',  set:{who:'极北之地的野狗', pow:'魂兽'}},
+   {w:26, t:'星斗大森林的一头柔骨兔', r:'树影很高,风声很杂。',           to:'b_forest', set:{who:'星斗大森林的柔骨兔', pow:'魂兽'}},
+   {w:18, t:'深海沟里的一条鱼',       r:'光到不了这里,你自己会发光。',   to:'b_deep',   set:{who:'深海沟里的鱼', pow:'魂兽'}},
+   {w:14, t:'火山口的一头赤角兽',     r:'你生下来就踩在烫脚的石头上。',   to:'b_vol',    set:{who:'火山口的赤角兽', pow:'魂兽'}},
+   {w:8,  t:'冰帝身边活下来的幼崽',   r:'方圆百里,没有东西敢靠近你。',   to:'b_north',  set:{who:'冰帝身边活下来的幼兽', pow:'魂兽', tags:['冰帝记得你']}},
+   {w:4,  lb:'龙裔', t:'你身上有一丝龙的血', r:'你自己还不知道,但老兽闻得出来。', to:'b_north', set:{who:'带着龙血的兽', pow:'魂兽', tags:['龙裔']}}
+  ]},
+
+/* =========================================================
+   人 线 出 身(一到两转,然后六岁觉醒)
+   ========================================================= */
+h_fish:{ title:'海 边 渔 村', who:'海边渔村的孩子', pow:'六岁', y0:6,
+  text:'海就在门口。你从会走路起就认识潮水。',
+  segs:[
+   {w:26, t:'你在风暴里救了一船人',   r:'你抱着桅杆游了两里。',          to:'h_awaken', set:{tags:['全村都念你的好']}},
+   {w:22, t:'你捞上来一块怪骨头',     r:'沉得像铁,却一点也不凉。',      to:'h_awaken', set:{tags:['兜里一块怪骨']}},
+   {w:18, t:'你跟着商队离开了渔村',   r:'你回头看了一眼,没敢多看。',    to:'h_awaken', set:{tags:['离乡的路上']}},
+   {w:15, t:'你的父亲死在海上',       r:'船回来了,人没回来。',          to:'h_awaken', set:{tags:['父亲死在海上']}},
+   {w:11, t:'你在礁石缝里捡到一个箱子', r:'上面没有锁,里面是空的。',    to:'h_awaken', set:{tags:['捡到一个空箱子']}},
+   {w:8,  t:'海啸淹了半个村子',       r:'你活下来了,海水记住了你。',    to:'h_awaken', set:{tags:['海啸里活下来的']}}
+  ]},
+
+h_smith:{ title:'铁 匠 铺', who:'铁匠铺的儿子', pow:'六岁', y0:6,
+  text:'炉火、铁屑、和一把比你高的锤子 —— 这就是你的六岁。',
+  segs:[
+   {w:26, t:'你抡了十年锤子',         r:'膀子比同龄人粗一圈。',          to:'h_awaken', set:{tags:['一身力气']}},
+   {w:22, t:'你偷学了一门锤法',       r:'夜里借着炉火练,手磨破了也不停。', to:'h_awaken', set:{tags:['会一套锤法']}},
+   {w:18, t:'你在铁里发现一块怪矿石', r:'敲开以后,里面是暗金色的。',    to:'h_awaken', set:{tags:['口袋里一块怪铁']}},
+   {w:15, t:'家里欠债,你被卖去矿区', r:'矿道很黑,你在里面待了两年。',  to:'h_awaken', set:{tags:['从矿里出来的']}},
+   {w:12, t:'你替父亲打了一把兵器',   r:'那把刀后来被人高价买走了。',    to:'h_awaken', set:{tags:['打过一把好兵器']}},
+   {w:7,  t:'铁匠铺着了一场大火',     r:'你父亲没出来,你抱着一把锤子站在外面。', to:'h_awaken', set:{tags:['家里烧没了']}}
+  ]},
+
+h_hall:{ title:'武 魂 殿 分 殿', who:'武魂殿分殿的孤儿', pow:'六岁', y0:6,
+  text:'武魂殿在每一座城里都有一座分殿。你是在柴房里长大的。',
+  segs:[
+   {w:26, t:'分殿主教看中了你',       r:'他让人把你从柴房挪进了后院。',  to:'h_awaken', set:{tags:['被主教记住了']}},
+   {w:22, t:'你被当成杂役使唤',       r:'扫地、劈柴、洗武魂殿的地砖。',  to:'h_awaken', set:{tags:['一身干活的力气']}},
+   {w:19, t:'你偷看了武魂觉醒的仪式', r:'隔着一道门缝,你看完了全程。',  to:'h_awaken', set:{tags:['提前见过觉醒']}},
+   {w:15, t:'你在分殿认识了一个朋友', r:'他分给你半个馒头,再也没还过。', to:'h_awaken', set:{tags:['有个朋友']}},
+   {w:10, t:'你在藏经阁里躲了一夜',   r:'你只来得及看三页。',            to:'h_awaken', set:{tags:['看过三页经书']}},
+   {w:8,  t:'分殿塌了',               r:'有人一夜之间把整座殿抹平了。',  to:'h_awaken', set:{tags:['见过灭门']}}
+  ]},
+
+h_sect:{ title:'七 宝 琉 璃 宗', who:'七宝琉璃宗的小姐', pow:'六岁', y0:6,
+  text:'你生在七宝琉璃宗。这名字在大陆上很好用,也很沉。',
+  segs:[
+   {w:24, t:'家族长老亲自替你测武魂', r:'一屋子人都在等那个结果。',      to:'h_awaken', set:{tags:['全宗都看着你']}},
+   {w:20, t:'你偷了宗门一门心法',     r:'抄在布上,缝进衣角里。',        to:'h_awaken', set:{tags:['揣着偷来的东西']}},
+   {w:17, t:'你在宗门大比上一鸣惊人', r:'那天你打倒了三个比你大的。',    to:'h_awaken', set:{tags:['大比扬名']}},
+   {w:14, t:'你被送去给别的宗门做质子', r:'你在别人的院子里长了三年。',  to:'h_awaken', set:{tags:['当过质子']}},
+   {w:12, t:'你被断定是废武魂,赶出宗门', r:'你连行李都没收拾完。',       to:'h_awaken', set:{tags:['被逐出宗门']}},
+   {w:13, t:'你家的护宗大阵塌了',     r:'那天晚上,宗门里少了一半人。',  to:'h_awaken', set:{tags:['宗门塌了']}}
+  ]},
+
+h_hunter:{ title:'猎 户 家', who:'猎户家的女儿', pow:'六岁', y0:6,
+  text:'山里什么都有,也什么都能要人命。你六岁就懂了。',
+  segs:[
+   {w:28, t:'你从小就跟着上山',       r:'你认得每一种脚印。',            to:'h_awaken', set:{tags:['认得脚印']}},
+   {w:23, t:'你练出一手好箭术',       r:'百步之内,你不看第二眼。',      to:'h_awaken', set:{tags:['一手好箭术']}},
+   {w:18, t:'你救了一头受伤的小兽',   r:'它跟了你三年,然后走了。',      to:'h_awaken', set:{tags:['救过魂兽']}},
+   {w:14, t:'你父亲死在魂兽爪下',     r:'你把他埋在了半山腰。',          to:'h_awaken', set:{tags:['猎户遗孤']}},
+   {w:11, t:'你在山里迷路了七天',     r:'你靠吃雪和树皮走出来的。',      to:'h_awaken', set:{tags:['在山里活过七天']}},
+   {w:6,  lb:'天生的猎人', t:'你不满十岁就独自猎杀了一头十年魂兽', r:'血溅了你一脸,你手没抖。', to:'h_awaken', set:{tags:['天生的猎人']}}
+  ]},
+
+h_fallen:{ title:'一 无 所 有', who:'被丢掉的孩子', pow:'六岁 · 没人管', y0:6,
+  text:'你被放在一座小庙门口。没有人留名字,也没有人回头。',
+  segs:[
+   {w:26, t:'你在街头活了下来',       r:'偷、讨、捡,你学会了一整套活法。',        to:'h_awaken', set:{tags:['街头出身']}},
+   {w:22, t:'一个老人收留了你',       r:'他不问你从哪来,只管你吃饱。',            to:'h_awaken', set:{tags:['有人管过饭']}},
+   {w:18, t:'你给人做苦力换饭',       r:'一天两顿,手上全是茧。',                  to:'h_awaken', set:{tags:['一身苦力气']}},
+   {w:14, t:'你偷东西被人抓住了',     r:'你挨了一顿打,记住了一句话:别被人抓住。', to:'h_awaken', set:{tags:['挨过打']}},
+   {w:12, t:'你捡到一件不该捡的东西', r:'你不知道它是什么,但你藏起来了。',        to:'h_awaken', set:{tags:['藏着一样东西']}},
+   {w:6,  t:'你在庙里翻到一本武魂册子', r:'上面画的东西,和你身上长的一样。',      to:'h_genius', set:{tags:['自己找到过武魂册子']}},
+   {w:4,  req:'无性', t:'老和尚说你不该存在', r:'他说完就走了,没赶你。',          to:'h_awaken', set:{tags:['被人说不该存在']}}
+  ]},
+
+h_genius:{ title:'天 才 的 路', who:'被人盯上的孩子', pow:'六岁', y0:6,
+  text:'武魂太好,也是一种麻烦 —— 想收你的、想用你的、想毁你的,一起来了。',
+  segs:[
+   {w:26, t:'大宗门抢着要你',         r:'你最先进了其中一家的门。',      to:'h_awaken', set:{tags:['大宗门弟子']}},
+   {w:21, t:'武魂殿直接把你带走',     r:'他们没问你愿不愿意。',          to:'h_awaken', set:{tags:['武魂殿的人']}},
+   {w:17, t:'你的名字传遍了大陆',     r:'还没成年,就已经没人敢直呼你。', to:'h_awaken', set:{tags:['少年成名']}},
+   {w:14, t:'你差点被人废掉武魂',     r:'有人在夜里动了手,你捡回来了。', to:'h_awaken', set:{tags:['武魂受过伤']}},
+   {w:11, t:'你被送进一处秘密学堂',   r:'那里全是和你一样的孩子。',      to:'h_awaken', set:{tags:['有同门一样的怪物']}},
+   {w:11, t:'你独自离开了家',         r:'你想看看,这世上还有没有比你更快的。', to:'h_awaken', set:{tags:['一个人出门的']}}
+  ]},
+
+/* =========================================================
+   六 岁 · 觉 醒
+   ========================================================= */
+h_awaken:{ title:'六 岁 · 觉 醒 武 魂', who:'六岁', pow:'未觉醒', y0:6,
+  text:'武魂殿的执事把手按在你额头上:"放轻松,它会自己醒。"',
+  segs:[
+   {w:24, t:'镰刀 —— 最差的那一种', r:'执事把册子合上了,没说什么。', to:'h_trash', set:{pow:'镰刀', tags:['废武魂']}},
+   {w:19, t:'木棍、蒲公英',         r:'能修,就是慢。',              to:'YEAR', lv:1, set:{pow:'木棍', tags:['木棍武魂']}},
+   {w:15, t:'赤狼、疾风雀',         r:'有人在你身后"哦"了一声。',    to:'YEAR', lv:1, set:{pow:'赤狼', tags:['赤狼武魂']}},
+   {w:12, t:'铁背熊、寒冰蜘蛛',     r:'还行。分殿把你的名字记上了。', to:'YEAR', lv:1, set:{pow:'铁背熊', tags:['铁背熊武魂']}},
+   {w:10, t:'白虎、幽冥灵猫',       r:'屋子里安静了一瞬,然后开始议论。', to:'YEAR', lv:2, set:{pow:'白虎', tags:['白虎武魂']}},
+   {w:8,  t:'蓝电霸王龙、邪火凤凰', r:'执事往后退了半步。',          to:'YEAR', lv:2, set:{pow:'蓝电霸王龙', tags:['顶级武魂']}},
+   {w:6,  t:'七宝琉璃塔',           r:'看守魂力的人全站起来了。',    to:'YEAR', lv:3, set:{pow:'七宝琉璃塔', tags:['七宝琉璃塔']}},
+   {w:4,  t:'昊天锤',               r:'那一下,屋里的东西全倒了。',  to:'YEAR', lv:3, set:{pow:'昊天锤', tags:['昊天锤']}},
+   {w:2,  lb:'蓝银皇', t:'蓝银皇 —— 草里的皇', r:'没人认得出来,只有一个人的脸色变了。', to:'YEAR', lv:4, set:{pow:'蓝银皇', tags:['蓝银皇']}},
+   {w:1,  lb:'双生武魂', t:'双生武魂 —— 两个,同时', r:'两个武魂一起醒的时候,分殿的灯全灭了。', to:'YEAR', lv:5, set:{pow:'双生武魂', tags:['双生武魂']}}
+  ]},
+
+h_trash:{ title:'废 武 魂', who:'被断定为废武魂', pow:'镰刀', y0:7,
+  text:'执事把册子合上,说了句:这个武魂,修炼了也没用。',
+  segs:[
+   {w:24, t:'你不认命,自己琢磨',     r:'别人一天练两个时辰,你练六个。', to:'YEAR', lv:2, set:{tags:['硬磨出来的']}},
+   {w:21, t:'你被人笑了一路',         r:'每一句你都记住了。',            to:'YEAR', lv:1, set:{tags:['心里憋着一股']}},
+   {w:18, t:'你遇到一个也被看不起的老师', r:'他说:武魂不分贵贱。',       to:'YEAR', lv:2, set:{tags:['有个好老师']}},
+   {w:15, t:'你考进一所没人听过的学院', r:'墙上写着:只收修不动的。',     to:'YEAR', lv:1, set:{tags:['只收废武魂的学院']}},
+   {w:11, t:'你发现武魂有点不对劲',   r:'镰刀的影子下面,好像还有一层。', to:'YEAR', lv:4, set:{tags:['武魂藏着东西']}},
+   {w:8,  t:'你的武魂在生死关头变了', r:'它根本不是你以为的那个东西。',  to:'YEAR', lv:6, set:{tags:['武魂变异']}},
+   {w:3,  lb:'灵魂镰刀', t:'你的镰刀,后来割开过神位的一角', r:'那都是很久以后的事了。', to:'YEAR', lv:8, set:{tags:['镰刀藏锋']}}
+  ]},
+
+/* =========================================================
+   人 线 · 年 度 盘(一年一转)
+   ========================================================= */
+y_child:{ title:'童 年 · 今 年 几 岁', kind:'7~12 岁 · 每年一转', who:'', pow:'',
+  text:'你还小。每转一次,你就长一岁。',
+  segs:[
+   {w:14, t:'你按部就班地修炼',     r:'一年下来,魂力涨了一点。',       lv:1, to:'YEAR'},
+   {w:12, t:'你在学院里被表扬',     r:'老师把你的名字写在了墙上。',    lv:1, to:'YEAR', set:{tags:['被表扬过']}},
+   {w:11, t:'你和同门打了一架',     r:'你赢了,也被罚了。',             lv:1, to:'YEAR'},
+   {w:10, t:'你偷偷练到半夜',       r:'你比同门多练了三百天。',         lv:2, to:'YEAR', set:{tags:['练得最狠的那个']}},
+   {w:9,  t:'你被高年级欺负',       r:'你打不过,只能忍。',             lv:-1, to:'YEAR', set:{tags:['被欺负过']}},
+   {w:9,  lb:'机遇', t:'机 遇',     r:'你在回家的路上,遇到了一件说不清的事。', to:'oppA'},
+   {w:8,  t:'你跟着长辈去猎魂森林', r:'你只敢站在外围看。',            lv:1, to:'huntA'},
+   {w:7,  t:'你病了一场',           r:'躺了三个月,魂力退了一点。',     lv:-1, to:'YEAR'},
+   {w:6,  t:'你被人夸有天赋',       r:'你开始觉得自己真的不一样。',    lv:1, to:'YEAR', set:{tags:['被夸过有天赋']}},
+   {w:5,  t:'你救了同门一次',       r:'他从此跟在你后面。',            lv:1, to:'YEAR', set:{tags:['有人跟着你']}},
+   {w:4,  t:'你在小比里输得很惨',   r:'你回去哭了,然后继续练。',       lv:1, to:'YEAR'},
+   {w:3,  t:'你捡到一本破册子',     r:'上面记着一种没人用的运气法子。', lv:2, to:'st_secret', set:{tags:['有一本破册子']}},
+   {w:3,  t:'宗门来挑人',           r:'他们看了你一眼,没挑。',         to:'YEAR'},
+   {w:2,  t:'你的武魂二次觉醒',     r:'那天屋里所有人的脸都变了。',    lv:3, to:'YEAR', set:{tags:['武魂二形态']}},
+   {w:2,  t:'同学死了',             r:'你第一次知道修炼会死人。',       to:'YEAR', set:{tags:['见过同门死']}},
+   {w:1,  t:'你重病了一场',         r:'你活下来了,但底子差了一截。',   lv:-3, to:'YEAR', set:{tags:['小时候病重过']}},
+   {w:3,  req:'双性', t:'族里不知道该怎么养你', r:'两套都在你身上,他们从没见过这种孩子。', lv:1, to:'YEAR', set:{tags:['族里说不清你']}}
+  ]},
+
+y_teen:{ title:'少 年 · 今 年 几 岁', kind:'13~18 岁 · 每年一转', who:'', pow:'',
+  text:'你这个年纪的魂师,每一年都能看出差别。',
+  segs:[
+   {w:13, t:'你参加了一场大比',     r:'你没拿第一,但有人记住了你。',    lv:2, to:'YEAR', set:{tags:['比过一场大的']}},
+   {w:12, t:'你和人结伴出行',       r:'路上你们互相挡过刀。',            lv:1, to:'YEAR', set:{tags:['有过同行的人']}},
+   {w:11, t:'你替人出头受了伤',     r:'你躺了一个月,但没后悔。',        lv:1, to:'YEAR', set:{tags:['替人出过头']}},
+   {w:10, t:'你突破了一次瓶颈',     r:'那一下,像是有什么通了。',        lv:3, to:'YEAR'},
+   {w:10, lb:'机遇', t:'机 遇',     r:'你在一个不该有人的地方,遇到了一个人。', to:'oppA'},
+   {w:9,  t:'你打伤了自己的同门',   r:'他再没跟你说过话。',             lv:-1, to:'YEAR', set:{tags:['伤过同门']}},
+   {w:8,  t:'你独自猎了一头魂兽',   r:'血是热的,你的手在抖。',          lv:2, to:'huntA', set:{tags:['第一次杀魂兽']}},
+   {w:7,  t:'你去报名魂师大赛',     r:'你在预选赛就被刷了下来。',       lv:1, to:'YEAR'},
+   {w:7,  t:'你得罪了人',           r:'他们在你水里动了手脚。',         lv:-2, to:'YEAR', set:{tags:['被人下过药']}},
+   {w:6,  t:'你遇到一个同龄的天才', r:'你输得很干净。',                 lv:2, to:'YEAR', set:{tags:['输给过天才']}},
+   {w:5,  t:'你上了一场大赛',       r:'台下有人一直在看你。',           lv:3, to:'st_contest'},
+   {w:4,  t:'你被师父收下',         r:'他只有一个条件:别学他。',        lv:3, to:'YEAR', set:{tags:['有师父']}},
+   {w:3,  t:'你救了一个人',         r:'他记了你一辈子。',               lv:1, to:'YEAR', set:{tags:['救过人']}},
+   {w:2,  t:'你在雨天练了一夜',     r:'那一夜之后,你不太一样了。',      lv:3, to:'YEAR', set:{tags:['在雨里练过一夜']}},
+   {w:2,  t:'你被人废了半只手的经脉', r:'你花了两年才接回来。',          lv:-3, to:'YEAR', set:{tags:['经脉伤过']}},
+   {w:1,  t:'你没能回来',           r:'你死在十八岁。',                 to:'end_dead'},
+   {w:3,  req:'无性', t:'同门不知道该怎么叫你', r:'哥哥也不是,姐姐也不是,他们干脆只喊你的名字。', lv:1, to:'YEAR', set:{tags:['没人知道怎么称呼你']}}
+  ]},
+
+y_young:{ title:'青 年 · 今 年 几 岁', kind:'19~30 岁 · 每年一转', who:'', pow:'',
+  text:'你这个年纪,一年做的事,能记一辈子。',
+  segs:[
+   {w:12, t:'你在大陆上走了几千里', r:'你见过的东西比同辈加起来都多。',  lv:2, to:'YEAR', set:{tags:['走过几千里']}},
+   {w:11, t:'你接了一年的悬赏',     r:'钱攒下来了,伤也攒下来了。',      lv:2, to:'YEAR'},
+   {w:10, t:'你在小城里做了客卿',   r:'那城里的人到现在还念着你。',     lv:2, to:'YEAR', set:{tags:['做过客卿']}},
+   {w:10, lb:'机遇', t:'机 遇',     r:'一件不太寻常的事,落在了你头上。', to:'oppB'},
+   {w:9,  t:'你上了一届魂师大赛',   r:'你打了七场。',                   lv:3, to:'st_contest'},
+   {w:9,  t:'你在秘境里走了一趟',   r:'你带出来一样东西。',              lv:2, to:'st_secret'},
+   {w:8,  t:'你被一伙人埋伏',       r:'你吐着血跑了出来。',              lv:-2, to:'YEAR', set:{tags:['重伤过']}},
+   {w:8,  t:'你收了自己的第一个徒弟', r:'你教他的第一句话,是当年老师教你的。', lv:2, to:'YEAR', set:{tags:['有徒弟']}},
+   {w:7,  t:'你得罪了武魂殿',       r:'他们记住了你的样子。',            lv:1, to:'YEAR', set:{tags:['得罪武魂殿']}},
+   {w:7,  t:'你进了一趟猎魂森林',   r:'你身上的魂骨是自己挣的。',        lv:2, to:'huntB'},
+   {w:6,  t:'你结下了一段死仇',     r:'有人发誓要拿你的头祭他弟弟。',    lv:2, to:'st_enemy', set:{tags:['背着血仇']}},
+   {w:5,  t:'你和一个姑娘走了三年', r:'后来你们分开了。',                lv:1, to:'st_love', set:{tags:['有过一个人']}},
+   {w:4,  t:'你突破了一个大境界',   r:'大陆上开始有人打听你。',          lv:4, to:'YEAR'},
+   {w:3,  t:'你被宗门请你去做长老', r:'你坐上了那个位置,比想象中冷。',  lv:3, to:'st_sect'},
+   {w:2,  t:'你闭关了三年',         r:'出关那天,外面换了季。',          lv:5, to:'YEAR'},
+   {w:2,  t:'你伤了根基',           r:'你的路短了一截。',                lv:-4, to:'YEAR', set:{tags:['根基受损']}},
+   {w:1,  t:'你死在仇家手里',       r:'你没能走出那条巷子。',            to:'end_dead'},
+   {w:4,  req:'女',   t:'有人上门提亲',       r:'你把来人打发走了 —— 你想先站到高处再说。', lv:1, to:'YEAR', set:{tags:['被提过亲']}},
+   {w:4,  req:'男',   t:'族里催你成家',       r:'你说等打赢下一场再说。',                   lv:1, to:'YEAR', set:{tags:['被催过成家']}},
+   {w:4,  req:'双性', t:'有人把你的身体当学问', r:'他们想研究你,你把他们打了一顿。',         lv:1, to:'YEAR', set:{tags:['被人研究过']}},
+   {w:4,  req:'无性', t:'名册上不肯写你',     r:'你那一栏是空的。',                        lv:1, to:'YEAR', set:{tags:['名册上没有你']}}
+  ]},
+
+y_prime:{ title:'壮 年 · 今 年 几 岁', kind:'31~50 岁 · 每年一转', who:'', pow:'',
+  text:'你是这片大陆上说得上话的人了。',
+  segs:[
+   {w:11, t:'你巩固了一年的修为',   r:'没什么大事,但是稳。',            lv:2, to:'YEAR'},
+   {w:10, t:'你带宗门做了一件事',   r:'那件事后来被人记了三十年。',      lv:2, to:'st_sect'},
+   {w:10, t:'你和人切磋了三天',     r:'你们谁都没赢。',                  lv:3, to:'YEAR', set:{tags:['战过强者']}},
+   {w:9,  lb:'机遇', t:'机 遇',     r:'你在一处人迹罕至的地方,停了下来。', to:'oppC'},
+   {w:9,  t:'你去猎杀了一头魂兽',   r:'你这个境界要的魂环,不好找。',     lv:2, to:'huntB'},
+   {w:8,  t:'你进了一片禁区',       r:'你回来之后有半年没说话。',        lv:3, to:'st_secret', set:{tags:['见过神迹']}},
+   {w:8,  t:'你收了一个天赋吓人的徒弟', r:'他学东西的样子,像极了你当年。', lv:2, to:'st_sect', set:{tags:['有好徒弟']}},
+   {w:7,  t:'你受了重伤',           r:'你花了五年才养回来。',            lv:-3, to:'YEAR', set:{tags:['重伤过']}},
+   {w:7,  t:'你和老仇人打了一场',   r:'你赢了,但没杀他。',              lv:3, to:'st_enemy'},
+   {w:6,  t:'神位那边有了感应',     r:'你在夜里坐着,能听见上面有动静。', lv:3, to:'st_god', set:{tags:['神位有感应']}},
+   {w:5,  t:'你去看了极北的雪',     r:'那里有一头活了百万年的东西。',    lv:3, to:'YEAR', set:{tags:['听过极北的传说']}},
+   {w:4,  t:'你悟出了一点东西',     r:'你说不清它是什么。',              lv:5, to:'YEAR', set:{tags:['摸到法则']}},
+   {w:3,  t:'你失了势',             r:'你一夜间少了很多人。',            lv:-2, to:'YEAR'},
+   {w:3,  t:'你把宗门带成了大陆前十', r:'你在宗史上只占了一行字。',       lv:2, to:'YEAR', set:{tags:['一宗之主']}},
+   {w:2,  t:'你的武魂长出了第二形态', r:'从今天起,你打的是两个人。',      lv:4, to:'YEAR', set:{tags:['武魂二形态']}},
+   {w:1,  t:'你在那场大战里没有退', r:'你兑现了"魂师"这两个字。',        to:'end_dead'},
+   {w:3,  req:'双性', t:'你自己也想过这件事', r:'你没想明白,但你不再为它烦了。', lv:1, to:'YEAR', set:{tags:['不再为这事烦']}},
+   {w:3,  req:'无性', t:'有人拿你的名字立了碑', r:'碑上没写男女,只写了名字。',     lv:1, to:'YEAR', set:{tags:['立过碑']}}
+  ]},
+
+y_mid:{ title:'中 年 · 今 年 几 岁', kind:'51~85 岁 · 每年一转', who:'', pow:'',
+  text:'到了这个岁数,一年比一年过得快。',
+  segs:[
+   {w:11, t:'你用了几年磨掉旧伤',   r:'你重新长回了当年那副样子。',      lv:2, to:'YEAR'},
+   {w:10, t:'你把毕生所学写成了册子', r:'那册子后来被人抄了很多遍。',     lv:2, to:'YEAR', set:{tags:['留下过册子']}},
+   {w:9,  t:'你和一位故人重聚',     r:'你们喝了三天酒,没提当年。',       lv:1, to:'YEAR'},
+   {w:9,  lb:'机遇', t:'机 遇',     r:'到了这个岁数,还能撞上机缘的人不多。', to:'oppD'},
+   {w:8,  t:'你带着人猎魂兽',       r:'你没怎么动手,只是站在后面看。',    lv:1, to:'huntC'},
+   {w:8,  t:'你进了一次禁区',       r:'你从里面带回了一样东西。',        lv:3, to:'st_secret'},
+   {w:7,  t:'你收留了一群孩子',     r:'他们叫你宗主,你让他们叫你师父。', lv:1, to:'YEAR', set:{tags:['收留过孩子']}},
+   {w:7,  t:'你的旧伤发作了',       r:'你疼了一整年。',                  lv:-2, to:'YEAR'},
+   {w:6,  t:'你和神界打了一次交道', r:'他们给的,你没要。',              lv:4, to:'st_god'},
+   {w:6,  t:'你悟出了第二条法则',   r:'两条法则在手,你抵得上半个神。',   lv:5, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:5,  t:'你把宗门交给了徒弟',   r:'你终于有时间想自己的事了。',      lv:1, to:'YEAR', set:{tags:['交出过宗门']}},
+   {w:4,  t:'你走遍了旧日的战场',   r:'那里现在种着麦子。',              lv:1, to:'YEAR'},
+   {w:4,  t:'有人在背后动了你的宗门', r:'你回去的时候,只剩灰。',          lv:-3, to:'st_sect'},
+   {w:3,  t:'你成了大陆第一',       r:'这个名头你等了四十年。',          lv:6, to:'YEAR', set:{tags:['大陆第一']}},
+   {w:3,  t:'你开始掉修为',         r:'有些东西,终究留不住。',          lv:-2, to:'YEAR'},
+   {w:3,  t:'你觉得自己老了',       r:'你开始想身后的事。',              lv:1, to:'YEAR', set:{tags:['开始想身后的事']}},
+   {w:3,  req:'女', t:'你收了个女弟子',       r:'你教她的第一句是:别指望谁替你出头。', lv:1, to:'YEAR', set:{tags:['收过女弟子']}},
+   {w:3,  req:'男', t:'你把这一生讲给后辈听', r:'他们记了下来,当成了传说。',           lv:1, to:'YEAR', set:{tags:['讲过自己的一生']}}
+  ]},
+
+y_old:{ title:'晚 年 · 今 年 几 岁', kind:'86 岁 以 上 · 每年一转', who:'', pow:'',
+  text:'能活到这个岁数的魂师,整个大陆数得过来。',
+  segs:[
+   {w:14, t:'你又撑过了一年',       r:'你还在。',                        to:'YEAR'},
+   {w:12, t:'你教了徒弟一套东西',   r:'那套东西他学了一辈子。',          lv:1, to:'YEAR', set:{tags:['传过道统']}},
+   {w:11, t:'你在院子里坐了一年',   r:'你什么都没做。',                  to:'YEAR'},
+   {w:10, lb:'机遇', t:'机 遇',     r:'你这样的岁数,还能遇到一件新鲜事。', to:'oppE'},
+   {w:9,  t:'你解决了最后一个心结', r:'你那天睡得很好。',                lv:2, to:'YEAR'},
+   {w:9,  t:'你和孙辈去打了一次猎', r:'你只放了一箭。',                  lv:1, to:'huntC'},
+   {w:8,  t:'你写下了一生的回顾',   r:'你写到一半,放下了笔。',           lv:1, to:'YEAR', set:{tags:['写过一生的回顾']}},
+   {w:7,  t:'你的旧伤又犯了',       r:'你知道这一次好不了了。',          lv:-2, to:'YEAR'},
+   {w:6,  t:'你把魂骨传给了徒弟',   r:'你觉得他用得上。',                lv:-1, to:'YEAR', set:{tags:['传过魂骨']}},
+   {w:5,  t:'你去看了一次极北',     r:'雪还是那么大。',                  to:'YEAR'},
+   {w:4,  t:'你悟出了最后一条法则', r:'你笑了很久。',                    lv:6, to:'YEAR', set:{tags:['有三条法则']}},
+   {w:4,  t:'你在梦里见到了年轻时的人', r:'醒来的时候,你在哭。',         lv:2, to:'YEAR'},
+   {w:3,  t:'你寿终正寝',           r:'你走的时候没什么遗憾。',          to:'end_old'},
+   {w:3,  t:'你最后一次站上了神位前面', r:'你看了看,转身走了。',          lv:3, to:'st_god'},
+   {w:3,  req:'双性', t:'有人把你写进了书里', r:'书里那一章叫《不该存在的人》。', lv:1, to:'YEAR', set:{tags:['被写进书里']}},
+   {w:3,  req:'无性', t:'他们最后也没给你一个称呼', r:'你已经不需要了。', lv:1, to:'YEAR'}
+  ]},
+
+/* =========================================================
+   99 级 · 满级之后 —— 整个转盘围绕神位(约 七成神位 / 两成退级无用 / 一成直接结局)
+   ========================================================= */
+y_god:{ title:'神 位 · 今 年 几 岁', kind:'99 级 · 满 级 之 后', who:'', pow:'',
+  text:'你已经站在这个世界的顶上了。<br>剩下的每一年,都在说同一件事 —— 那个位置。',
+  segs:[
+   {w:11, t:'神位认得你了',         r:'它开始等你走最后一步。',          lv:2, to:'god_final', set:{tags:['神位认得你']}},
+   {w:9,  t:'你去了神位前面',       r:'你站在那里,看了很久。',          to:'god_final'},
+   {w:9,  t:'神界派人来找你谈',     r:'他们说:你可以上来,但要先放弃一些东西。', lv:2, to:'st_god', set:{tags:['和神界谈过']}},
+   {w:8,  t:'你和神位打了三天',     r:'你没赢,但那个位置也没赢。',      lv:3, to:'YEAR', set:{tags:['和神位打过']}},
+   {w:7,  t:'你悟出了第三条法则',   r:'这一条从来没人悟出来过。',        lv:5, to:'god_final', set:{tags:['有三条法则']}},
+   {w:7,  t:'旧神把剩下的东西给了你', r:'你背上多了一副担子。',          lv:6, to:'YEAR', set:{tags:['旧神传承']}},
+   {w:6,  t:'你把法则传给了徒弟',   r:'你开始想身后的事。',              to:'YEAR', set:{tags:['传过法则']}},
+   {w:5,  t:'你带着一群人去了神界', r:'你不想一个人上去。',              lv:3, to:'god_final', set:{tags:['带人上过神界']}},
+   {w:5,  t:'你在神位前面坐了几年', r:'什么也没发生。',                  lv:-2, to:'YEAR', set:{tags:['在神位前坐过几年']}},
+   {w:4,  t:'你被人偷袭,修为倒退', r:'你少了一大截。',                  lv:-8, to:'YEAR', set:{tags:['被偷袭过']}},
+   {w:4,  t:'你差一点就上去了',     r:'你从上面掉了下来。',              lv:-4, to:'YEAR', set:{tags:['摔下来过']}},
+   {w:4,  t:'神位被别人抢了',       r:'你去晚了一步。',                  lv:-3, to:'YEAR', set:{tags:['神位被人抢过']}},
+   {w:4,  t:'你把神位让给了徒弟',   r:'他比你更像当年的你。',            to:'end_title'},
+   {w:3,  t:'你拒绝了神位',         r:'你说:我不想变成那种东西。',      to:'end_title', set:{tags:['拒绝过神位']}},
+   {w:3,  t:'你和神位同归于尽',     r:'上面那一层,黑了很久。',          to:'end_dead'},
+   {w:3,  t:'你的寿元到了',         r:'你死在离神位一步的地方。',        to:'end_old'},
+   {w:2,  lb:'神位认主', t:'神位认了你的名字 —— 你踏进了神界', r:'天开了。你往上走的时候,没有回头。', to:'end_god'}
+  ]},
+
+/* =========================================================
+   魂 兽 · 年 限 进 阶 盘
+   魂兽不吸收魂环 —— 它的成长就是年限。每跨过一个年限刻度来一次,
+   格子和概率由 bmileSegs(年限) 现算。十万年以上才会出现「化形」。
+   ========================================================= */
+BMILE:{ title:'年 限 进 阶', who:'', pow:'',
+  text:'每跨过一个年限刻度,你的身子就会变一次。<br>魂兽没有魂环 —— 它只有年岁。',
+  segs:[{ w:1, t:'你的身子变了一点', r:'你说不清是哪里变了。', lv:1, to:'YEAR' }]},
+
+/* =========================================================
+   十 万 年 魂 兽 · 化 形
+   ========================================================= */
+huaxing:{ title:'化 形', kind:'十 万 年 之 上 · 化 形 为 人', who:'十万年魂兽', pow:'',
+  text:'只有十万年以上的魂兽,才能走这一步。<br>化形之后你会变成人 —— 但代价是修为大损,甚至忘了从前。',
+  segs:[
+   {w:22, t:'化形成功 —— 修为几乎全丢', r:'你有了手脚,也第一次知道什么叫"疼"。', to:'YEAR', sy:16, lv:-200, set:{beast:false, hx:true, who:'化形的魂兽', pow:'刚变成人的兽', tags:['化形者']}},
+   {w:16, t:'化形成功 —— 保住了一半',   r:'你成了人,身上的力还在,只是换了形状。', to:'YEAR', sy:18, lv:-40, set:{beast:false, hx:true, who:'化形的魂兽', pow:'带着兽力的人', tags:['化形者','兽力未散']}},
+   {w:13, t:'化形成功 —— 回到少年',     r:'你成了一个人,从十六岁开始重新活一遍。', to:'YEAR', sy:16, lv:-100, set:{beast:false, hx:true, who:'化形的魂兽', pow:'少年模样', tags:['化形者']}},
+   {w:12, t:'化形失败,半人半兽',        r:'你有人的脸,也有兽的爪子。两边都不认你。', to:'YEAR', set:{who:'半人半兽', pow:'半人半兽', tags:['半人半兽']}},
+   {w:10, t:'化形到一半被人打断',        r:'你卡在了两个样子中间。', to:'YEAR', set:{who:'半人半兽', pow:'半人半兽', tags:['半人半兽','被人打断过']}},
+   {w:9,  t:'你选择不化形',              r:'你说:我这样也挺好。', to:'YEAR', set:{tags:['拒绝过化形']}},
+   {w:7,  t:'化形成功,但忘了从前',      r:'雪原、冰帝、那个冬天 —— 全没了。', to:'YEAR', sy:16, lv:-200, set:{beast:false, hx:true, who:'化形的魂兽', pow:'什么都不记得的人', tags:['化形者','忘了从前']}},
+   {w:5,  t:'化形那天,天劫来了',        r:'人和兽都不要你。你死在那道雷里。', to:'end_dead'},
+   {w:3,  lb:'冰帝来送你', t:'化形时冰帝来了', r:'她说:你走你的。然后给了你一样东西。', to:'YEAR', sy:16, lv:-60, spirit:'冰帝', bone:1, set:{beast:false, hx:true, who:'化形的魂兽', pow:'带着冰帝的东西', tags:['化形者','冰帝送过你']}}
+  ]},
+
+/* =========================================================
+   化 形 者 · 年 度 盘(人形,但底子是十万年魂兽)
+   ========================================================= */
+y_hx:{ title:'化 形 者 · 今 年 几 岁', kind:'化 形 之 后 · 每 年 一 转', who:'', pow:'',
+  text:'你有人的身体,和一头十万年魂兽的底子。<br>这个世界还没准备好接受你。',
+  segs:[
+   {w:14, t:'你重新学怎么用两只手',   r:'筷子、扣子、写字 —— 你从头学。',        lv:2, to:'YEAR', set:{tags:['从头学做人']}},
+   {w:12, t:'你走进人类的城',         r:'没有人多看你一眼。你差点哭出来。',      lv:2, to:'YEAR', set:{tags:['进过人类的城']}},
+   {w:11, t:'你试着修炼人类的法门',   r:'你上手快得吓人 —— 底子在那儿。',        lv:3, to:'YEAR'},
+   {w:10, t:'魂兽见了你会低头',       r:'它们认得你身上那股味道。',              lv:2, to:'YEAR', set:{tags:['兽见了你低头']}},
+   {w:9,  t:'有机遇',                 r:'你身上带着兽的运气。',                  to:'oppC'},
+   {w:8,  t:'有魂师认出你不是人',     r:'他什么都没说,但他记住了你。',          lv:1, to:'YEAR', set:{tags:['被人看出不是人']}},
+   {w:8,  t:'你回了一趟极北',         r:'你站在雪里,谁也没认出你。',            lv:2, to:'YEAR', set:{tags:['回过极北']}},
+   {w:7,  t:'你遇到当年认识你的兽',   r:'它老了,你还年轻。它没说话。',          lv:2, to:'YEAR', set:{tags:['见过当年的旧识']}},
+   {w:6,  t:'你的兽性压不住了',       r:'你在夜里露出了爪子。',                  lv:-3, to:'YEAR', set:{tags:['兽性压不住']}},
+   {w:5,  t:'你去猎魂',               r:'你猎兽的时候,手比谁都稳。',            lv:3, to:'huntA'},
+   {w:5,  t:'你救了个人,他说你像神仙', r:'你没敢告诉他,你以前是头兽。',        lv:2, to:'YEAR', set:{tags:['被人当成神仙']}},
+   {w:4,  t:'有人要拿你的骨头做文章', r:'他们想知道十万年魂兽化形后还剩什么。',  lv:-2, to:'st_enemy', set:{tags:['被人盯上']}},
+   {w:3,  t:'你第一次哭',             r:'你活了十万年,第一次会哭。',            lv:2, to:'YEAR', set:{tags:['第一次哭']}},
+   {w:2,  lb:'兽血觉醒', t:'你的兽血在人形下面醒了', r:'人形下面,那头兽还在。', lv:6, to:'YEAR', set:{tags:['兽血觉醒']}},
+   {w:2,  req:'女',   t:'有人来提亲',           r:'你说不出自己的来历,就没答应。', lv:1, to:'YEAR'},
+   {w:2,  req:'无性', t:'他们不知道该怎么称呼你', r:'你连一个"他"或"她"都分不到。', lv:2, to:'YEAR', set:{tags:['没有称呼的人']}},
+   {w:1,  req:'冰帝送过你', t:'你拿出冰帝当年给你的东西', r:'它认得你 —— 你现在是人了,它也认得。', spirit:'冰帝', lv:5, to:'YEAR'}
+  ]},
+
+/* =========================================================
+   机 遇 盘 —— 年度盘上转到「机遇」就开这一个
+   ========================================================= */
+oppA:{ title:'机 遇', kind:'机 遇 · 少年', who:'', pow:'',
+  text:'转到「机遇」就会开这一个盘 —— 好运坏运都在这儿。',
+  segs:[
+   {w:13, t:'你在山路上捡到一颗果子', r:'吃了以后魂力涨了一截。',       lv:2, to:'YEAR'},
+   {w:12, t:'一个老人指点你三天',     r:'他说的东西,你三年后才懂。',    lv:2, to:'YEAR', set:{tags:['被老人指点过']}},
+   {w:11, t:'你在崖底发现一处洞府',   r:'里面的人已经死了很久。',        lv:3, to:'YEAR', set:{tags:['进过洞府']}},
+   {w:10, t:'你被一条毒蛇咬了',       r:'你躺了半年,魂力退了一截。',    lv:-2, to:'YEAR', set:{tags:['中过毒']}},
+   {w:9,  t:'你捡到一块魂骨',         r:'它很小,但是真的。',            bone:1, to:'YEAR'},
+   {w:9,  t:'你救了一个落难的人',     r:'他临走时给了你一件东西。',     lv:1, to:'YEAR', set:{tags:['救过人']}},
+   {w:8,  t:'你遇到一头受伤的魂兽',   r:'它看着你,没有跑。',            spirit:'小兽', to:'YEAR'},
+   {w:7,  t:'你在一处遗迹得到传承',   r:'墙上的字,你居然认得。',        lv:5, to:'YEAR', set:{tags:['得过传承']}},
+   {w:6,  t:'你被一伙人埋伏',         r:'你逃了出来,但丢了东西。',      lv:-1, to:'YEAR', set:{tags:['被埋伏过']}},
+   {w:5,  t:'你遇到了一个师父',       r:'他只有一个条件:别学他。',      lv:4, to:'YEAR', set:{tags:['有师父']}},
+   {w:4,  t:'一块万年魂骨',           r:'它埋在雪下面,等了你很多年。',  bone:1, lv:3, to:'YEAR'},
+   {w:2,  lb:'神之骨', t:'你捡到一块不像这个世界的东西', r:'它在你手里发烫。', bone:1, lv:8, to:'YEAR', set:{tags:['神之骨']}},
+   {w:1,  lb:'死于贪婪', t:'你伸手去拿那件不该拿的东西', r:'你没能走出那个洞。', to:'end_dead'}
+  ]},
+
+oppB:{ title:'机 遇', kind:'机 遇 · 青年', who:'', pow:'',
+  text:'路上会遇到什么,谁也说不准。',
+  segs:[
+   {w:12, t:'你在秘境里捡到两块魂骨', r:'黑暗里,它们挨着发光。',        bone:1, lv:2, to:'YEAR'},
+   {w:12, t:'一位封号斗罗收你为徒',   r:'他只有一个条件:别学他。',      lv:5, to:'YEAR', set:{tags:['封号斗罗的弟子']}},
+   {w:11, t:'你得到一门心法',         r:'只有三页,但是管用。',          lv:4, to:'YEAR', set:{tags:['有一门心法']}},
+   {w:10, t:'你被人下毒',             r:'你在床上躺了半年。',            lv:-2, to:'YEAR', set:{tags:['中过毒']}},
+   {w:9,  t:'你在一处秘地看到古字',   r:'你居然认得。',                  lv:5, to:'YEAR', set:{tags:['读过古字']}},
+   {w:9,  t:'你和一头老兽定了约',     r:'它把魂灵给了你。',              spirit:'老兽', lv:2, to:'YEAR'},
+   {w:8,  t:'你从一场围杀里活了下来', r:'你少了一条胳膊,但活了。',      lv:-1, to:'YEAR', set:{tags:['断过一条胳膊']}},
+   {w:7,  t:'你在一座小城里救了人',   r:'那城里的人到现在还念着你。',    lv:2, to:'YEAR', set:{tags:['救过一城人']}},
+   {w:6,  t:'你摸到了一点法则的边',   r:'你看不见它,但你能感觉到。',    lv:6, to:'YEAR', set:{tags:['摸到法则']}},
+   {w:5,  t:'你得到了一块万年魂骨',   r:'它比你的胳膊还沉。',            bone:1, lv:4, to:'YEAR'},
+   {w:4,  t:'你遇到一位化形的魂兽',   r:'她说:想变强,先别急着变强。',   lv:3, to:'YEAR', set:{tags:['听过魂兽的话']}},
+   {w:3,  t:'你和一头十万年魂兽缔结契约', r:'它把魂灵交给你的时候,雪停了。', spirit:'十万年魂兽', lv:6, to:'YEAR', set:{tags:['缔过十万年契约']}},
+   {w:2,  lb:'神之骨', t:'你在人迹罕至的地方捡到一块神之骨', r:'它不像这个世界的骨头。', bone:1, lv:10, to:'YEAR', set:{tags:['神之骨']}},
+   {w:1,  lb:'秘境没出来', t:'你在秘境深处走错了最后一步', r:'没有人知道你去哪了。', to:'end_dead'}
+  ]},
+
+oppC:{ title:'机 遇', kind:'机 遇 · 壮年', who:'', pow:'',
+  text:'你这个境界还撞上机缘,就是天在帮你。',
+  segs:[
+   {w:12, t:'你在一处绝地见到神迹',   r:'你回来之后有半年没说话。',      lv:6, to:'YEAR', set:{tags:['见过神迹']}},
+   {w:11, t:'你悟出了一条法则',       r:'它在你身上刻下来了。',          lv:8, to:'YEAR', set:{tags:['有一条法则']}},
+   {w:10, t:'你得到一块万年魂骨',     r:'它认了你。',                    bone:1, lv:5, to:'YEAR'},
+   {w:9,  t:'你被人围杀,重伤',       r:'你花了五年才养回来。',          lv:-4, to:'YEAR', set:{tags:['被围杀过']}},
+   {w:9,  t:'你和一位老前辈论道',     r:'你们说了三天,谁也没说服谁。',  lv:4, to:'YEAR', set:{tags:['论过道']}},
+   {w:8,  t:'你收了一个天赋吓人的徒弟', r:'他学东西的样子,像极了你当年。', lv:3, to:'YEAR', set:{tags:['有好徒弟']}},
+   {w:7,  t:'你在一处禁区带回一样东西', r:'你不知道它是什么。',          lv:5, to:'YEAR', set:{tags:['带回过不该带的']}},
+   {w:6,  t:'你和一头凶兽定了契约',   r:'它成了你的魂灵。',              spirit:'凶兽', lv:6, to:'YEAR', set:{tags:['凶兽魂灵']}},
+   {w:5,  t:'你摸到了第二条法则',     r:'两条法则在手,你抵得上半个神。', lv:10, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:4,  t:'你的武魂彻底长成了',     r:'它已经不是你当年觉醒时那个东西了。', lv:6, to:'YEAR', set:{tags:['武魂大成']}},
+   {w:4,  t:'你在神位前面站了一夜',   r:'你什么都没做,只是看着。',      lv:5, to:'YEAR', set:{tags:['在神位前站过']}},
+   {w:3,  t:'你和神界的人谈了一次',   r:'他们给的,你没要。',            lv:4, to:'YEAR', set:{tags:['和神界谈过']}},
+   {w:2,  lb:'神位认得你', t:'神位认了你的名 —— 它开始等你了', r:'你听见了那个声音。', lv:12, to:'YEAR', set:{tags:['神位认得你']}},
+   {w:2,  lb:'死于绝地', t:'你在那处绝地里,没能走出来', r:'禁区里的东西从来不放人。', to:'end_dead'}
+  ]},
+
+oppD:{ title:'机 遇', kind:'机 遇 · 中年', who:'', pow:'',
+  text:'到了这个岁数,还能撞上机缘的人不多。',
+  segs:[
+   {w:13, t:'你悟出了第二条法则',     r:'两条法则在手,你抵得上半个神。', lv:8, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:12, t:'你在禁区里见到了旧神',   r:'他跟你说了一句话。',            lv:8, to:'YEAR', set:{tags:['见过旧神']}},
+   {w:11, t:'你得到一块极北的魂骨',   r:'它是红的,而且一直很凉。',        bone:1, lv:6, to:'YEAR'},
+   {w:10, t:'你的旧伤发作',           r:'你疼了一整年。',                lv:-3, to:'YEAR'},
+   {w:9,  t:'你把毕生所学写成了册子', r:'那册子后来被人抄了很多遍。',    lv:3, to:'YEAR', set:{tags:['留下过册子']}},
+   {w:8,  t:'你和神界的人打了一次',   r:'你没赢,但那个位置也没赢。',    lv:7, to:'YEAR', set:{tags:['和神界打过']}},
+   {w:7,  t:'你收留了一群孤儿',       r:'他们叫你宗主,你让他们叫你师父。', lv:2, to:'YEAR', set:{tags:['收留过孩子']}},
+   {w:6,  t:'你和一头魂兽缔结了契约', r:'它愿意跟你走最后一段路。',      spirit:'同行魂兽', lv:5, to:'YEAR'},
+   {w:5,  t:'你悟出了第三条法则',     r:'你笑了很久。',                  lv:12, to:'YEAR', set:{tags:['有三条法则']}},
+   {w:4,  t:'你的名字被刻进了宗碑',   r:'宗史上,你占了一页。',          lv:4, to:'YEAR', set:{tags:['进了宗碑']}},
+   {w:4,  t:'你被人背叛了一次',       r:'你从此不再收徒弟。',            lv:-2, to:'YEAR', set:{tags:['被背叛过']}},
+   {w:3,  t:'你成了大陆第一',         r:'这个名头你等了四十年。',        lv:10, to:'YEAR', set:{tags:['大陆第一']}},
+   {w:2,  lb:'旧神传承', t:'旧神把剩下的东西全给了你', r:'你背上多了一副担子。', lv:15, to:'YEAR', set:{tags:['旧神传承']}},
+   {w:2,  lb:'走火入魔', t:'你冲关的时候,神魂散了', r:'你死在自己的洞府里。', to:'end_dead'}
+  ]},
+
+oppE:{ title:'机 遇', kind:'机 遇 · 晚年', who:'', pow:'',
+  text:'你这样的岁数,还能遇到一件新鲜事。',
+  segs:[
+   {w:14, t:'你解决了最后一个心结',   r:'你那天睡得很好。',              lv:3, to:'YEAR'},
+   {w:13, t:'你在梦里见到年轻时的人', r:'醒来的时候,你在哭。',           lv:3, to:'YEAR'},
+   {w:12, t:'你悟出了最后一条法则',   r:'你笑了很久。',                  lv:12, to:'YEAR', set:{tags:['有三条法则']}},
+   {w:11, t:'你把魂骨传给了徒弟',     r:'你觉得他用得上。',              lv:-1, to:'YEAR', set:{tags:['传过魂骨']}},
+   {w:10, t:'你教了徒弟最后一招',     r:'那一招他学了一辈子。',          lv:2, to:'YEAR', set:{tags:['传过道统']}},
+   {w:9,  t:'你和神位谈了一次',       r:'你说:这一次我自己选。',        lv:6, to:'YEAR', set:{tags:['自己选过神位']}},
+   {w:8,  t:'你的旧伤又犯了',         r:'你知道这次好不了了。',          lv:-3, to:'YEAR'},
+   {w:7,  t:'你收了一个关门弟子',     r:'他让你想起了自己六岁那年。',    lv:3, to:'YEAR', set:{tags:['有关门弟子']}},
+   {w:6,  t:'你在一处旧地找到当年的人', r:'他已经不认得你了。',           lv:4, to:'YEAR'},
+   {w:5,  t:'你悟出了可以传下去的东西', r:'那东西后来救过很多人。',      lv:8, to:'YEAR', set:{tags:['留下过传承']}},
+   {w:4,  t:'你在雪里坐了一年',       r:'你什么都没想。',                lv:4, to:'YEAR', set:{tags:['坐过一年']}},
+   {w:3,  t:'你最后一次站上神位前',   r:'你看了看,转身走了。',          lv:10, to:'st_god'},
+   {w:2,  lb:'寿元已尽', t:'你在一个清晨没有醒来', r:'你走的时候没什么遗憾。', to:'end_old'}
+  ]},
+
+/* =========================================================
+   魂 环 盘 —— 每升十级自动开一次
+   ========================================================= */
+RING:{ title:'获 取 魂 环', kind:'每 十 级 · 魂 环', who:'', pow:'',
+  text:'每升十级,你就要吸收一个魂环。转到什么年限,就看这一次。',
+  segs:[
+   {w:28, t:'十年魂环(白)',    r:'最普通的那种。至少没出岔子。',        ring:'十年',   to:'YEAR', set:{tags:['十年魂环']}},
+   {w:26, t:'百年魂环(黄)',    r:'标准配置,稳稳当当。',                ring:'百年',   to:'YEAR', set:{tags:['百年魂环']}},
+   {w:18, t:'千年魂环(紫)',    r:'你越级了,而且扛住了。',              ring:'千年',   lv:1, to:'YEAR', set:{tags:['千年魂环']}},
+   {w:12, t:'万年魂环(黑)',    r:'越了整整两档。你吐了三天的血。',      ring:'万年',   lv:2, to:'YEAR', set:{tags:['万年魂环']}},
+   {w:6,  lb:'十万年魂环', t:'十万年魂环(红)', r:'那东西认了你。没人敢信。', ring:'十万年', lv:4, to:'YEAR', set:{tags:['十万年魂环']}},
+   {w:6,  t:'吸收失败,魂力倒退', r:'你在床上躺了一年。',              lv:-1, to:'YEAR', set:{tags:['吸收失败过']}},
+   {w:3,  t:'猎到的魂兽年限不够', r:'你只能拿它凑数。',                ring:'十年',   to:'YEAR'},
+   {w:1,  lb:'魂环里住着东西', t:'你吸收的魂环里,住着一个魂灵', r:'它开口说了话。', ring:'万年', spirit:'环中魂灵', lv:3, to:'YEAR'}
+  ]},
+
+/* =========================================================
+   猎 杀 盘 —— 稀有魂兽会爆魂骨,更稀有的能缔结契约
+   ========================================================= */
+huntA:{ title:'猎 杀 魂 兽', kind:'猎 杀', who:'', pow:'',
+  text:'猎到什么样的魂兽,就看这一转 —— 稀有的会爆魂骨,更稀有的能缔结契约。',
+  segs:[
+   {w:21, t:'猎到一头十年魂兽',     r:'没爆什么,但肉很好吃。',         lv:1, to:'YEAR'},
+   {w:18, t:'猎到一头百年魂兽',     r:'魂环归了你,别的什么也没有。',   lv:2, to:'YEAR'},
+   {w:13, t:'猎到一头千年魂兽',     r:'你的第一块魂骨,是它给的。',     bone:1, lv:2, to:'YEAR'},
+   {w:12, t:'猎到一头千年魂兽,没爆', r:'你有点失望。',                 lv:2, to:'YEAR'},
+   {w:9,  t:'猎到一头万年魂兽',     r:'它身上掉下来一块黑的。',        bone:1, lv:3, to:'YEAR', set:{tags:['屠过万年']}},
+   {w:8,  t:'猎到一头万年魂兽,没爆', r:'你把它埋了。',                 lv:3, to:'YEAR'},
+   {w:6,  t:'猎到一头十万年魂兽',   r:'它的魂骨是红的。',              bone:1, lv:6, to:'YEAR', set:{tags:['屠过十万年']}},
+   {w:6,  t:'你遇到一头幼兽,放它走了', r:'它跟了你一路。',             spirit:'幼兽', to:'YEAR', set:{tags:['放过幼兽']}},
+   {w:5,  t:'你和一头魂兽缔结契约', r:'它把魂灵给了你。',              spirit:'缔约魂兽', lv:3, to:'YEAR'},
+   {w:6,  t:'你被魂兽反杀',         r:'你少了一条胳膊。',              lv:-3, to:'YEAR', set:{tags:['断过一条胳膊']}},
+   {w:2,  t:'你遇到一头凶兽',       r:'你连它的样子都没看清。',        to:'end_dead'},
+   {w:2,  lb:'契约·冰帝', t:'极北之地的冰帝,给了你一个魂灵', r:'整片雪原都安静了。', spirit:'冰帝', lv:8, to:'YEAR', set:{tags:['冰帝的魂灵']}}
+  ]},
+
+huntB:{ title:'猎 杀 魂 兽', kind:'猎 杀 · 深入', who:'', pow:'',
+  text:'你现在要的魂环,得往深处走。',
+  segs:[
+   {w:18, t:'猎到一头百年魂兽',     r:'对你来说已经不够了。',          lv:1, to:'YEAR'},
+   {w:17, t:'猎到一头千年魂兽',     r:'它给了一块魂骨。',              bone:1, lv:2, to:'YEAR'},
+   {w:14, t:'猎到一头千年魂兽,没爆', r:'你有点失望。',                 lv:2, to:'YEAR'},
+   {w:12, t:'猎到一头万年魂兽',     r:'它身上掉下来一块黑的。',        bone:1, lv:3, to:'YEAR', set:{tags:['屠过万年']}},
+   {w:10, t:'猎到一头万年魂兽,没爆', r:'你把它埋了。',                 lv:3, to:'YEAR'},
+   {w:8,  t:'猎到一头十万年魂兽',   r:'它的魂骨是红的。',              bone:1, lv:7, to:'YEAR', set:{tags:['屠过十万年']}},
+   {w:7,  t:'你和一头老兽定了契约', r:'它愿意把魂灵给你。',            spirit:'老兽', lv:4, to:'YEAR'},
+   {w:6,  t:'你咬死了一头异种',     r:'它身上有两块魂骨。',            bone:2, lv:5, to:'YEAR', set:{tags:['猎过异种']}},
+   {w:5,  t:'你被魂兽反杀',         r:'你吐着血爬了回来。',            lv:-4, to:'YEAR', set:{tags:['重伤过']}},
+   {w:4,  t:'你在林子里遇到一个人', r:'他也来找魂环,你们分了。',      lv:2, to:'YEAR'},
+   {w:2,  t:'你遇到一头凶兽',       r:'你连它的样子都没看清。',        to:'end_dead'},
+   {w:2,  lb:'契约·冰帝', t:'极北之地的冰帝,给了你一个魂灵', r:'整片雪原都安静了。', spirit:'冰帝', lv:10, to:'YEAR', set:{tags:['冰帝的魂灵']}}
+  ]},
+
+huntC:{ title:'猎 杀 魂 兽', kind:'猎 杀 · 绝 顶', who:'', pow:'',
+  text:'到了你这个境界,能猎的东西已经不多了。',
+  segs:[
+   {w:16, t:'猎到一头千年魂兽',     r:'它给了一块魂骨。',              bone:1, lv:1, to:'YEAR'},
+   {w:15, t:'猎到一头万年魂兽',     r:'它身上掉下来一块黑的。',        bone:1, lv:2, to:'YEAR'},
+   {w:13, t:'猎到一头万年魂兽,没爆', r:'你把它埋了。',                 lv:2, to:'YEAR'},
+   {w:12, t:'猎到一头十万年魂兽',   r:'它的魂骨是红的。',              bone:1, lv:5, to:'YEAR', set:{tags:['屠过十万年']}},
+   {w:10, t:'猎到一头百万年魂兽',   r:'它掉下来的东西,你不敢用手接。', bone:1, lv:10, to:'YEAR', set:{tags:['屠过百万年']}},
+   {w:9,  t:'你和一头凶兽缔结契约', r:'它成了你的魂灵。',              spirit:'凶兽', lv:6, to:'YEAR', set:{tags:['凶兽魂灵']}},
+   {w:8,  t:'你和一头冰属性的老兽定了约', r:'它跟了你很久。',           spirit:'冰属性老兽', lv:5, to:'YEAR'},
+   {w:7,  t:'你咬死了一头异种',     r:'它身上有两块魂骨。',            bone:2, lv:4, to:'YEAR', set:{tags:['猎过异种']}},
+   {w:3,  lb:'六块魂骨', t:'你终于凑齐了六块魂骨', r:'你身上没有一处是空的。', bone:3, lv:6, to:'YEAR', set:{tags:['六块魂骨']}},
+   {w:6,  t:'你被魂兽反杀',         r:'你差点没回来。',                lv:-4, to:'YEAR', set:{tags:['重伤过']}},
+   {w:4,  t:'你放走了一头幼兽',     r:'它跟着你回了家。',              spirit:'幼兽', to:'YEAR', set:{tags:['养过魂兽']}},
+   {w:3,  t:'你遇到一头凶兽',       r:'你和它打了一天一夜。',          lv:-6, to:'YEAR', set:{tags:['和凶兽打过']}},
+   {w:2,  lb:'契约·冰帝', t:'极北之地的冰帝,给了你一个魂灵', r:'整片雪原都安静了。', spirit:'冰帝', lv:14, to:'YEAR', set:{tags:['冰帝的魂灵']}}
+  ]},
+
+/* =========================================================
+   剧 情 盘
+   ========================================================= */
+st_contest:{ title:'魂 师 大 赛', kind:'剧 情', who:'', pow:'',
+  text:'大陆上每几年就有一次大赛。那是年轻人一次成名的地方。',
+  segs:[
+   {w:18, t:'你夺了魁',             r:'从那以后,没人再问你是谁家的孩子。', lv:5, to:'YEAR', set:{tags:['大赛夺魁']}},
+   {w:16, t:'你止步十六强',         r:'你输给最后拿了冠军的那个人。',    lv:2, to:'YEAR', set:{tags:['输给过冠军']}},
+   {w:14, t:'你在赛场上被人暗算',   r:'你带着伤打完了全程。',            lv:1, to:'YEAR', set:{tags:['带伤打过全程']}},
+   {w:12, t:'你认识了一生之敌',     r:'你们打了三次,你赢了一次。',      lv:3, to:'YEAR', set:{tags:['有个一生之敌']}},
+   {w:11, t:'你放弃了比赛去救人',   r:'你没能上台,但你救了一条命。',    lv:2, to:'YEAR', set:{tags:['为救人弃赛']}},
+   {w:9,  t:'一位封号斗罗在台下看了你一眼', r:'他什么也没说,但你记住了。', lv:4, to:'YEAR', set:{tags:['被封号斗罗看过']}},
+   {w:8,  t:'你在台上打出了真火',   r:'那一场至今有人提起。',            lv:5, to:'YEAR', set:{tags:['打出过一场名局']}},
+   {w:6,  t:'你在大赛上受了重伤',   r:'你花了十年才养回来。',            lv:-5, to:'YEAR', set:{tags:['大赛上重伤']}},
+   {w:6,  t:'你一战成名',           r:'整个大陆都念得出你的名字了。',    lv:8, to:'YEAR', set:{tags:['名动大陆']}}
+  ]},
+
+st_sect:{ title:'宗 门 之 事', kind:'剧 情', who:'', pow:'',
+  text:'宗门这两个字,一半是家,一半是枷。',
+  segs:[
+   {w:17, t:'你把宗门带成了大陆前十', r:'你在宗史上只占了一行字。',      lv:4, to:'YEAR', set:{tags:['一宗之主']}},
+   {w:15, t:'你收留了一群没人要的孩子', r:'他们叫你宗主,你让他们叫你师父。', lv:3, to:'YEAR', set:{tags:['收留过孩子']}},
+   {w:13, t:'你和别的宗门结了盟',   r:'联盟里有你的位置,也有你的敌人。', lv:3, to:'YEAR', set:{tags:['有盟友']}},
+   {w:12, t:'你的宗门被人灭了一次', r:'你回来的时候,只剩灰。',          lv:-2, to:'YEAR', set:{tags:['宗门被灭']}, savedBy:'六块魂骨'},
+   {w:11, t:'你在宗里立了一条规矩', r:'那条规矩后来救了很多人的命。',    lv:3, to:'YEAR', set:{tags:['立过一条规矩']}},
+   {w:9,  t:'你为宗门挡了一次大劫', r:'你少了一半修为,宗门保住了。',    lv:-4, to:'YEAR', set:{tags:['为宗门挡过大劫']}},
+   {w:8,  t:'你退出宗门,一个人走了', r:'你把宗主印放在桌上,没跟任何人告别。', lv:2, to:'YEAR', set:{tags:['退过宗门']}},
+   {w:7,  t:'你把宗门交给了徒弟',   r:'你终于有时间想自己的事了。',      lv:1, to:'YEAR', set:{tags:['交出过宗门']}},
+   {w:8,  t:'你成了宗门第一人',     r:'宗史上,你占了一页。',            lv:6, to:'YEAR', set:{tags:['进了宗碑']}}
+  ]},
+
+st_love:{ title:'一 个 人', kind:'剧 情', who:'', pow:'',
+  text:'修炼之外,人也得活。',
+  segs:[
+   {w:18, t:'你和一个人走了很多年', r:'她后来成了你最想留的人。',        lv:2, to:'YEAR', set:{tags:['有过一个人']}},
+   {w:16, t:'你没敢开口',           r:'很多年后你还会想起那天。',        lv:2, to:'YEAR', set:{tags:['没敢开口']}},
+   {w:14, t:'她替你挡了一次',       r:'她没死,但再也不能修练了。',      lv:3, to:'YEAR', set:{tags:['欠过一条命']}},
+   {w:12, t:'她死在了你怀里',       r:'你把她的东西一直带在身上。',      lv:2, to:'YEAR', set:{tags:['心里有人']}},
+   {w:11, t:'你们分开了',           r:'她说:你要走的路太长。',          lv:1, to:'YEAR'},
+   {w:9,  t:'你为了她放弃了一次机缘', r:'你没后悔。',                   lv:2, to:'YEAR', set:{tags:['为一个人弃过机缘']}},
+   {w:8,  t:'你们有了孩子',         r:'那孩子六岁那年,觉醒了武魂。',    lv:3, to:'YEAR', set:{tags:['有孩子']}},
+   {w:7,  t:'她走了',               r:'你没送。',                        lv:2, to:'YEAR', set:{tags:['送走过人']}},
+   {w:5,  t:'你一个人过了一辈子',   r:'你把所有的时间都给了修炼。',      lv:5, to:'YEAR', set:{tags:['一个人过了一辈子']}}
+  ]},
+
+st_enemy:{ title:'死 仇', kind:'剧 情', who:'', pow:'',
+  text:'有些账,一辈子都算不完。',
+  segs:[
+   {w:18, t:'你赢了第一次交手',     r:'他跑了,但他记住你了。',          lv:3, to:'YEAR', set:{tags:['赢过一场']}},
+   {w:16, t:'你输了一次',           r:'你回去把伤养好,又练了三年。',    lv:2, to:'YEAR'},
+   {w:14, t:'他杀了你的人',         r:'你去的时候,已经晚了。',          lv:3, to:'YEAR', set:{tags:['被杀了人']}},
+   {w:12, t:'你杀了他的家人',       r:'从那天起,你们谁也不欠谁了。',    lv:3, to:'YEAR', set:{tags:['手上沾了血']}},
+   {w:11, t:'你们打成了平手',       r:'你们互相扶着站起来了。',          lv:4, to:'YEAR', set:{tags:['和死敌打成平手']}},
+   {w:9,  t:'你认清了一个道理',     r:'仇恨也是一种修炼。',              lv:5, to:'YEAR', set:{tags:['把恨练成了劲']}},
+   {w:8,  t:'你和解了',             r:'他跪下来的时候,你把他扶起来了。', lv:3, to:'YEAR', set:{tags:['和仇人和解了']}},
+   {w:3,  t:'你死在他手里',         r:'你没能走出那条巷子。',            to:'end_dead'},
+   {w:5,  t:'你终于杀了他',         r:'你在他尸体边坐了一夜。',          lv:4, to:'YEAR', set:{tags:['报了仇']}}
+  ]},
+
+st_secret:{ title:'秘 境', kind:'剧 情', who:'', pow:'',
+  text:'秘境这种东西,进去的人一半出不来。',
+  segs:[
+   {w:17, t:'你捡到一块魂骨',       r:'黑暗里,它在发光。',              bone:1, lv:2, to:'YEAR'},
+   {w:15, t:'你在墙上读到古老的字', r:'你居然认得。',                    lv:4, to:'YEAR', set:{tags:['读过古字']}},
+   {w:13, t:'你得到了一处传承',     r:'那个人在死之前,把东西给了你。',  lv:6, to:'YEAR', set:{tags:['得过传承']}},
+   {w:12, t:'你差点死在里面',       r:'你被同队的人扔下了。',            lv:-1, to:'YEAR', set:{tags:['被人丢下过']}},
+   {w:10, t:'你带走了一件不该带的', r:'从那以后,你夜里总听见声音。',    lv:3, to:'YEAR', set:{tags:['带走了不该带的']}},
+   {w:9,  t:'你遇到一头守门的魂兽', r:'它没拦你,只是看了一眼。',        lv:3, to:'YEAR', set:{tags:['魂兽放你过去']}},
+   {w:8,  t:'你摸到了一点法则',     r:'你看不见它,但你能感觉到。',      lv:6, to:'YEAR', set:{tags:['摸到法则']}},
+   {w:7,  t:'你在里面待了很多年',   r:'出来的时候,外面换了季。',        lv:8, to:'YEAR', set:{tags:['在秘境里待了很多年']}},
+   {w:6,  t:'你和里面的东西定了约', r:'它把魂灵给了你。',              spirit:'秘境之物', lv:4, to:'YEAR'},
+   {w:2,  t:'你没出来',             r:'没有人知道你去哪了。',            to:'end_dead'},
+   {w:5,  t:'你把秘境封了',         r:'你说:里面的东西不该出来。',      lv:5, to:'YEAR', set:{tags:['封过秘境']}}
+  ]},
+
+st_god:{ title:'神 位 的 感 应', kind:'剧 情', who:'', pow:'',
+  text:'大陆上最高的那个位置,开始注意你了。',
+  segs:[
+   {w:17, t:'你在神位前面站了一夜', r:'你什么都没做,只是看着。',        lv:5, to:'YEAR', set:{tags:['在神位前站过']}},
+   {w:15, t:'神界的信使来找过你',   r:'他说:你可以上来,但要先放弃一些东西。', lv:6, to:'YEAR', set:{tags:['和神界谈过']}},
+   {w:13, t:'你拒绝了信使',         r:'你说:我不想变成那种东西。',      lv:5, to:'YEAR', set:{tags:['拒绝过神位']}},
+   {w:12, t:'你和神位打了三天',     r:'你没赢,但那个位置也没赢。',      lv:8, to:'YEAR', set:{tags:['和神位打过']}},
+   {w:10, t:'你悟出了第二条法则',   r:'两条法则在手,你抵得上半个神。',  lv:9, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:9,  t:'你的武魂彻底长成了',   r:'它已经不是你当年觉醒时那个东西了。', lv:7, to:'YEAR', set:{tags:['武魂大成']}},
+   {w:8,  t:'你差一点就上去了',     r:'你从上面掉下来,摔在了地上。',    lv:-3, to:'YEAR', set:{tags:['摔下来过']}},
+   {w:7,  t:'你把神位让给了别人',   r:'你看着他走上去,然后转身下山。',  lv:6, to:'YEAR', set:{tags:['让过神位']}},
+   {w:6,  t:'旧神把剩下的东西给了你', r:'你背上多了一副担子。',          lv:12, to:'YEAR', set:{tags:['旧神传承']}},
+   {w:5,  t:'你和神位同归于尽',     r:'上面的那一层,黑了很久。',        lv:-8, to:'YEAR', set:{tags:['和神位同归过']}},
+   {w:4,  lb:'神位认得你', t:'神位认了你的名 —— 它开始等你了', r:'你听见了那个声音。', lv:14, to:'YEAR', set:{tags:['神位认得你']}},
+   {w:4,  lb:'三条法则', t:'你悟出了第三条法则 —— 这一条从来没人悟出来过', r:'上面开始慌了。', lv:16, to:'YEAR', set:{tags:['有三条法则']}}
+  ]},
+
+/* =========================================================
+   兽 线 —— 同样是一年一转,只是年限跳得快
+   ========================================================= */
+b_north:{ title:'极 北 之 地', who:'极北之地的野狗', pow:'十年魂兽', y0:10,
+  text:'你是这片雪原上最不起眼的一头小兽。<br>从今天起,每过一段年月,你都要赌一次命。',
+  segs:[
+   {w:22, t:'你熬过了第一场暴风雪',   r:'你把自己埋进雪里,活下来了。',    to:'YEAR', set:{beast:true}, lv:1},
+   {w:19, t:'你找到一处地热温泉',     r:'暖水养出了你一身好筋骨。',       to:'YEAR', set:{beast:true, tags:['温泉底子']}, lv:2},
+   {w:16, t:'你被猎魂小队围过一次',   r:'你从箭雨里钻出去,瘸了一条腿。', to:'YEAR', set:{beast:true, tags:['身上带伤']}, lv:1},
+   {w:13, t:'你撞上了冰帝的巡猎队',   r:'领头的看了你一眼,没吃你。',     to:'YEAR', set:{beast:true, tags:['冰帝记得你']}, lv:2},
+   {w:11, t:'你吃掉了自己的同窝',     r:'那年冬天太长了。',               to:'YEAR', set:{beast:true, tags:['吞过同类']}, lv:2},
+   {w:9,  t:'你被一头老兽赶出领地',   r:'你成了无主的魂兽,到处流浪。',   to:'YEAR', set:{beast:true, tags:['没有领地']}, lv:1},
+   {w:7,  t:'你摸到了雪线之上的东西', r:'那里有一株不认识的草。',         to:'YEAR', set:{beast:true, tags:['灵草根骨']}, lv:3},
+   {w:3,  lb:'雪原之子', t:'你在雪里出生,雪里长大,风雪都绕着你走', r:'极北的风认得你。', to:'YEAR', set:{beast:true, tags:['雪原之子']}, lv:4}
+  ]},
+
+b_forest:{ title:'星 斗 大 森 林', who:'星斗大森林的柔骨兔', pow:'十年魂兽', y0:10,
+  text:'这片林子很大,大到你可以活很久 —— 只要别撞上人。',
+  segs:[
+   {w:22, t:'你认了一头老魂兽做领路', r:'它教你怎么看脚印、怎么听风。',   to:'YEAR', set:{beast:true, tags:['有老兽罩着']}, lv:1},
+   {w:19, t:'你躲进了一条没人的山沟', r:'你在里面安安生生住了几年。',     to:'YEAR', set:{beast:true}, lv:2},
+   {w:16, t:'你误入了人类的猎杀圈',   r:'血味飘了三天,你躲在洞里没敢动。', to:'YEAR', set:{beast:true, tags:['见过同类被剥皮']}, lv:1},
+   {w:13, t:'你被同类赶出了领地',     r:'你成了无主的魂兽。',             to:'YEAR', set:{beast:true, tags:['没有领地']}, lv:1},
+   {w:11, t:'你吃到一株百年灵草',     r:'那一口下去,筋骨都在响。',       to:'YEAR', set:{beast:true, tags:['灵草根骨']}, lv:3},
+   {w:9,  t:'你长出了一点灵智',       r:'你突然听得懂鸟叫了。',           to:'YEAR', set:{beast:true, tags:['开了灵智']}, lv:2},
+   {w:7,  t:'你活过了这片林子的三代', r:'树长了一茬又一茬,你还在。',     to:'YEAR', set:{beast:true}, lv:2},
+   {w:3,  lb:'林中异种', t:'你身上的东西,连林子里最老的那头兽都不认得', r:'你是这片林子里唯一一头错了的兽。', to:'YEAR', set:{beast:true, tags:['林中异种']}, lv:4}
+  ]},
+
+  b_deep:{ title:'深 海 沟', who:'深海沟里的鱼', pow:'魂兽',
+  text:'这里没有光。你自己会亮,亮给谁看,你不知道。',
+  segs:[
+  {w:26, t:'你在黑暗里长了很多年',     r:'你比同族都大。',                to:'by_1', y:8,  set:{tags:['深海的底子']}},
+  {w:22, t:'你被暗流卷到了浅海',       r:'光刺得你睁不开眼。',            to:'by_1', y:10, set:{tags:['到过浅海']}},
+  {w:18, t:'你吃掉了一头比自己大的',   r:'你撑了整整一年。',              to:'by_1', y:12, set:{tags:['吞过比自己大的']}},
+  {w:14, t:'你身上长出了硬壳',         r:'人类的网拉不动你。',            to:'by_1', y:9},
+  {w:12, t:'你顺着海沟一直往下游',     r:'底下有东西在呼吸。',            to:'by_1', y:14, set:{tags:['海底有东西']}},
+  {w:8,  req:'双性', t:'族里没人分得清你算什么', r:'两套都在你身上,海里也不常见。', to:'by_1', y:8, set:{tags:['族里说不清你']}},
+  {w:6,  lb:'海底的东西', t:'海沟最底下那个东西醒了', r:'它没有眼睛,但它看了你一眼。', to:'by_1', y:20, set:{tags:['被海底的东西看过']}}
+  ]},
+
+  b_vol:{ title:'火 山 口', who:'火山口的赤角兽', pow:'魂兽',
+  text:'这里的石头是烫的。你的脚底比石头还硬。',
+  segs:[
+  {w:26, t:'你在岩浆边上长大',         r:'火烤了你十年,你连皮都没裂。',    to:'by_1', y:10, set:{tags:['火里长起来的']}},
+  {w:22, t:'你把整座山头烧了一遍',     r:'从那以后,这里只认你。',          to:'by_1', y:12, set:{tags:['占过一座山']}},
+  {w:18, t:'有人来取你的角',           r:'他没能下山。',                    to:'by_1', y:9,  set:{tags:['杀过取角的人']}},
+  {w:14, t:'你吃了一株火里长的草',     r:'你烧了三天,醒来力气大了一倍。',   to:'by_1', y:14, set:{tags:['灵草根骨']}},
+  {w:12, t:'你的角长成了赤色',         r:'老兽说这是好兆头。',              to:'by_1', y:11, set:{tags:['赤角']}},
+  {w:8,  req:'无性', t:'火里出生的你,没有公母', r:'在这座山上,这不奇怪。',   to:'by_1', y:10, set:{tags:['火山里生出来的']}}
+  ]},
+
+  by_1:{ title:'十 年 魂 兽 · 又 过 了 些 年', kind:'十 年 · 每 转 一 次 就是 一 段 年 月', who:'十年魂兽', pow:'',
+  text:'你还小。每转一次,你就又长了一些年岁。',
+  segs:[
+   {w:16, t:'你在雪原上长了几年',   r:'没什么大事。',                    lv:1, skip:8,  to:'YEAR'},
+   {w:14, t:'你找到一片好猎场',     r:'你胖了一圈。',                    lv:1, skip:10, to:'YEAR'},
+   {w:12, t:'你抢了同类的猎物',     r:'你比它壮,也比它狠。',            lv:2, skip:6,  to:'YEAR', set:{tags:['抢过食']}},
+   {w:11, t:'你被猎人的夹子夹住',   r:'你咬断自己的腿才逃出来。',        lv:-1, skip:5, to:'YEAR', set:{tags:['断过爪子']}},
+   {w:10, lb:'机遇', t:'机 遇',     r:'雪线之上,有一株不认识的东西。',  to:'b_oppA'},
+   {w:9,  t:'你遇上一位化形前辈',   r:'她说:想成人,先想清楚代价。',     lv:2, skip:15, to:'YEAR', set:{tags:['听过前辈的劝']}},
+   {w:8,  t:'你亲眼看着同窝被剥皮', r:'你记住了那些人的脸。',            lv:1, skip:8,  to:'YEAR', set:{tags:['心里埋了恨']}},
+   {w:7,  t:'你猎到了一头小兽',     r:'你没爆出什么,但吃饱了。',        lv:2, skip:10, to:'b_hunt'},
+   {w:6,  t:'你误食了一株灵草',     r:'你烧了三天,醒来筋骨全变了。',    lv:3, skip:20, to:'YEAR', set:{tags:['灵草根骨']}},
+   {w:5,  t:'你被同类赶出领地',     r:'你成了无主的魂兽。',              lv:1, skip:12, to:'YEAR', set:{tags:['没有领地']}},
+   {w:4,  t:'你在雪里开了灵智',     r:'你开始明白"以后"是什么意思。',   lv:3, skip:25, to:'YEAR', set:{tags:['开智']}},
+   {w:2,  t:'你没熬过那个冬天',     r:'你死在那片雪里。没有人知道你是谁。',    to:'end_dead'},
+   {w:4,  req:'双性', t:'族里没人分得清你',   r:'两套都在你身上。兽群里也不常见。', lv:1, skip:8, to:'YEAR', set:{tags:['族里说不清你']}}
+  ]},
+
+by_2:{ title:'百 年 魂 兽 · 又 过 了 些 年', kind:'百 年 · 每 转 一 次 就是 一 段 年 月', who:'百年魂兽', pow:'',
+  text:'一百年过去,你已经不是当年那头小兽了。',
+  segs:[
+   {w:15, t:'你安静地过了几十年',   r:'雪落了又化,你只老了一点点。',    lv:1, skip:40,  to:'YEAR'},
+   {w:13, t:'你占下了一片好地方',   r:'从此这片山坡归你。',             lv:2, skip:50,  to:'YEAR', set:{tags:['有领地']}},
+   {w:12, t:'你进化出了一点本事',   r:'你的爪子上开始结霜。',           lv:3, skip:60,  to:'YEAR', set:{tags:['冰属性']}},
+   {w:11, t:'人类的猎魂队找上了你', r:'你把他们引进了雪崩里。',         lv:2, skip:30,  to:'YEAR', set:{tags:['杀过人']}},
+   {w:10, lb:'机遇', t:'机 遇',     r:'你在雪原深处撞上了一件事。',     to:'b_oppA'},
+   {w:10, t:'你捡到一块冰属性魂骨', r:'它冻得你骨髓都在响。',           bone:1, skip:70, to:'YEAR', set:{tags:['冰魂骨']}},
+   {w:9,  t:'你被更强的同类打伤',   r:'你逃进地底,躺了三年。',          lv:-1, skip:20, to:'YEAR', set:{tags:['断过骨头']}, savedBy:'冰帝记得你'},
+   {w:8,  t:'你遇到一头化形的老龙', r:'他说:你身上有个东西。',          lv:3, skip:80,  to:'YEAR', set:{tags:['龙族血脉']}},
+   {w:7,  t:'你去猎了一头千年魂兽', r:'它掉下来一块魂骨。',             bone:1, skip:60, to:'b_hunt'},
+   {w:6,  t:'你被封进一座冰窟',     r:'你在里面熬了两百年才化开。',     lv:2, skip:200, to:'YEAR', set:{tags:['冰窟里出来的']}},
+   {w:4,  t:'你吞掉了一头千年魂兽', r:'它的年限全归了你。',             lv:5, skip:300, to:'YEAR', set:{tags:['吞过千年魂兽']}},
+   {w:2,  t:'你没能跑出那支猎魂队', r:'你的皮被人剥下来,挂在了墙上。',             to:'end_dead'}
+  ]},
+
+by_3:{ title:'千 年 魂 兽 · 又 过 了 些 年', kind:'千 年 · 每 转 一 次 就是 一 段 年 月', who:'千年魂兽', pow:'',
+  text:'"千年"这两个字,在人类的图鉴上已经值钱了。',
+  segs:[
+   {w:14, t:'你用几百年换了一身本事', r:'你终于配得上"千年"这两个字。', lv:2, skip:300,  to:'YEAR'},
+   {w:12, t:'你引来了一场天劫',     r:'雷把你劈进了地底。',             lv:1, skip:500,  to:'YEAR'},
+   {w:11, t:'人类的封号斗罗来找你', r:'你们打平了,他记住你了。',       lv:4, skip:250,  to:'YEAR', set:{tags:['和封号斗罗交过手']}},
+   {w:10, lb:'机遇', t:'机 遇',     r:'极北的雪下面,有你没见过的东西。', to:'b_oppB'},
+   {w:10, t:'你被六支猎魂队围堵',   r:'你少了三块肉,但是活了。',        lv:-2, skip:150, to:'YEAR', set:{tags:['重伤过']}, savedBy:'冰帝的印记'},
+   {w:9,  t:'你吞了一位同阶的全部', r:'它的记忆也一并进了你脑子里。',   lv:5, skip:400,  to:'b_hunt'},
+   {w:8,  t:'你的灵智彻底开了',     r:'你开始想只有人才会想的事。',     lv:4, skip:300,  to:'YEAR', set:{tags:['开智']}},
+   {w:7,  t:'你摸到了一个法则的边', r:'你看不见它,但你能感觉到。',     lv:6, skip:600,  to:'YEAR', set:{tags:['摸到法则']}},
+   {w:6,  t:'你救下一头快死的幼兽', r:'你把它养大了。',                 lv:2, skip:200,  to:'YEAR', set:{tags:['养过崽子']}},
+   {w:5,  t:'冰帝给了你一个名字',   r:'极北之地从此有了你的位置。',     lv:5, skip:800,  to:'YEAR', set:{tags:['冰帝赐名']}},
+   {w:4,  t:'你在冰层下面看见了人的样子', r:'你好像知道自己该变成什么了。', lv:4, skip:500, to:'YEAR', set:{tags:['化形契机']}},
+   {w:2,  lb:'没撑到第四道', t:'九道雷,你没有撑到第四道', r:'雷云散了以后,地上什么也没剩。', to:'end_dead'},
+   {w:3,  req:'无性', t:'你连求偶这一步都省了', r:'你活得比同族都安静。', lv:1, skip:300, to:'YEAR', set:{tags:['没有公母']}}
+  ]},
+
+by_4:{ title:'万 年 魂 兽 · 又 过 了 些 年', kind:'万 年 · 每 转 一 次 就是 一 段 年 月', who:'万年魂兽', pow:'',
+  text:'一万年。大陆上敢直呼你名字的人,一只手数得过来。',
+  segs:[
+   {w:13, t:'你用几千年磨掉了身上的伤', r:'你重新长回了当年那副样子。', lv:2, skip:3000,  to:'YEAR'},
+   {w:12, t:'你开辟了自己的一片界', r:'那块地方,连风都是你的。',       lv:4, skip:4000,  to:'YEAR', set:{tags:['有自己的一界']}},
+   {w:11, t:'你渡过了一次小劫',     r:'雷云散的时候,你还在。',          lv:3, skip:5000,  to:'YEAR'},
+   {w:10, lb:'机遇', t:'机 遇',     r:'一块不存在于地图上的地方。',     to:'b_oppB'},
+   {w:10, t:'有封号斗罗盯上了你', r:'他想要你的魂环,但他不敢一个人来。',        lv:2, skip:2000,  to:'YEAR', set:{tags:['被人盯上']}},
+   {w:9,  t:'你被天劫劈碎了半身',   r:'你花了三千年才重新长出来。',      lv:-3, skip:1500, to:'YEAR', set:{tags:['被天劫重创']}, savedBy:'龙族血脉'},
+   {w:9,  t:'你吞了一头十万年的一角', r:'那一口把你撑了整整五千年。',   lv:6, skip:8000,  to:'b_hunt', set:{tags:['沾过十万年']}},
+   {w:8,  t:'你悟出一条法则',       r:'它在你身上刻下来了。',            lv:8, skip:9000,  to:'YEAR', set:{tags:['有一条法则']}},
+   {w:7,  t:'龙族的血脉在你体内醒了', r:'连冰帝都看了一会儿。',          lv:6, skip:6000,  to:'YEAR', set:{tags:['龙族血脉觉醒']}},
+   {w:6,  t:'你和冰帝并肩猎了一头魂兽', r:'那一次之后,极北之地都改了口。', lv:8, skip:30000, to:'YEAR', set:{tags:['与冰帝并肩']}},
+   {w:5,  t:'你在极北的风里化形',   r:'两条腿。你站了很久。',            lv:10, skip:20000, to:'YEAR', set:{tags:['化形成人']}},
+   {w:4,  t:'你被围在天劫和人类之间', r:'这一次你谁都没让。',            lv:6, skip:12000, to:'YEAR', set:{tags:['从围杀里立住']}},
+   {w:2,  lb:'龙相大成', t:'你身上的龙相彻底长成了', r:'你一动,天就要变。', lv:14, skip:40000, to:'YEAR', set:{tags:['龙相']}}
+  ]},
+
+by_5:{ title:'十 万 年 魂 兽 · 又 过 了 些 年', kind:'十 万 年 · 每 转 一 次 就是 一 段 年 月', who:'十万年魂兽', pow:'',
+  text:'十万年。这三个字在人类的书上,是要单独写一页的。',
+  segs:[
+   {w:12, t:'你安静地做着极北的主人', r:'雪原上所有活的东西都认得你的气味。', lv:2, skip:20000, to:'YEAR'},
+   {w:11, t:'你炼出了自己的领域',   r:'你站的地方,温度由你说了算。',   lv:5, skip:40000, to:'YEAR', set:{tags:['领域雏形']}},
+   {w:10, t:'人类派了三位封号斗罗', r:'他们回去了两个,都缺了东西。',   lv:4, skip:25000, to:'YEAR', set:{tags:['一战成名']}},
+   {w:10, lb:'机遇', t:'机 遇',     r:'神界的边角,离你很近了。',       to:'b_oppC'},
+   {w:9,  t:'你在天劫里丢了一条腿', r:'你把它长回来那年,极北下了黑雪。', lv:-3, skip:15000, to:'YEAR', set:{tags:['天劫留过痕']}, savedBy:'龙族血脉'},
+   {w:9,  t:'你吞了一位十万年的同族', r:'在你们同归于尽的边缘,你赢了半步。', lv:8, skip:60000, to:'b_hunt', set:{tags:['吞过十万年']}},
+   {w:8,  t:'你悟出第二条法则',     r:'两条法则在手,你抵得上半个神。', lv:10, skip:70000, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:7,  t:'龙族血脉彻底显形',     r:'你身上开始长出不该有的东西。',   lv:8, skip:80000, to:'YEAR', set:{tags:['龙相']}},
+   {w:7,  t:'你被卷进了人类的战争', r:'你从战场上走过,两边都停了手。', lv:6, skip:50000, to:'YEAR', set:{tags:['被人类敬畏']}},
+   {w:6,  t:'你的领域大成',         r:'极北之地成了你的东西。',          lv:12, skip:200000, to:'YEAR', set:{tags:['完整领域']}},
+   {w:5,  t:'冰帝和你并肩站了很久', r:'你们谁都没说话。',               lv:10, skip:150000, to:'YEAR', set:{tags:['与冰帝并肩']}},
+   {w:4,  t:'你进了一次神界的边角', r:'你在那里站了三天,什么也没得到。', lv:8, skip:120000, to:'YEAR', set:{tags:['摸过神界']}},
+   {w:3,  t:'你被一头陌生的东西伤了', r:'你没看清它是什么。',            lv:-5, skip:40000, to:'YEAR', set:{tags:['有道伤']}},
+   {w:2,  lb:'冰帝同心', t:'冰帝把她的印放在了你身上,两枚印合成了一枚', r:'极北的风停了三天。', lv:15, skip:300000, to:'YEAR', set:{tags:['冰帝同心']}}
+  ]},
+
+by_6:{ title:'百 万 年 魂 兽 · 终 局', kind:'百 万 年 · 每 转 一 次 就是 一 段 年 月', who:'百万年魂兽', pow:'',
+  text:'百万年。你现在是这个世界的一部分了。',
+  segs:[
+   {w:11, t:'你在沉寂里过了几十万年', r:'你不动的时候,雪就是你的形状。', lv:2, skip:300000, to:'YEAR'},
+   {w:10, t:'你把极北彻底改成了自己的样子', r:'那儿已经是另一个世界了。', lv:4, skip:400000, to:'YEAR', set:{tags:['极北之主']}},
+   {w:9,  t:'你渡过了百万年大劫',   r:'九道雷,你一道都没躲。',          lv:6, skip:500000, to:'YEAR', set:{tags:['渡过百万年劫']}},
+   {w:9,  lb:'机遇', t:'机 遇',     r:'神界的人,这次是来谈的。',       to:'b_oppC'},
+   {w:8,  t:'神界来人找你谈过一次', r:'他们说:你可以上来,但要先放弃一些东西。', lv:5, skip:600000, to:'YEAR', set:{tags:['和神界谈过']}},
+   {w:8,  t:'你又悟出了第三条法则', r:'三条法则,你数得过来。',          lv:8, skip:700000, to:'YEAR', set:{tags:['有三条法则']}},
+   {w:7,  t:'你吞掉了最后一个同阶的东西', r:'再没有谁能跟你比年限了。', lv:10, skip:900000, to:'b_hunt', set:{tags:['再无敌手']}},
+   {w:7,  t:'冰帝没有再走',         r:'极北的风,从此是两个人的。',      lv:6, skip:800000, to:'YEAR', set:{tags:['冰帝相守']}},
+   {w:6,  t:'你想起自己最初的样子', r:'一头在雪里发抖的小兽。',          lv:2, skip:200000, to:'YEAR'},
+   {w:6,  t:'你走进人类的世界看了一圈', r:'他们把你的样子画在了旗上。',  lv:5, skip:500000, to:'YEAR', set:{tags:['被人类供着']}},
+   {w:4,  t:'你留在极北,做了这片雪原的规矩', r:'没有神位,也没有碑,但所有活的东西都听你的。', to:'end_beast_lord', lv:8},
+   {w:4,  t:'你带着冰帝,把神位劈了一半', r:'你们没要那个位置,你们只是把它折了。', to:'end_beast_ice', lv:10, set:{tags:['双神并立']}},
+   {w:3,  t:'你吞了神位,自己坐了上去', r:'你不是被选中的,你是自己走上去的。', to:'end_beast_god', lv:12},
+   {w:3,  t:'渡劫飞升',             r:'极北的雪,第一次化了一半。',      to:'end_beast_up', lv:10, set:{tags:['飞升']}},
+   {w:2,  t:'你把一生传给了另一头小兽', r:'像当年那头老兽对你做的一样。', to:'end_beast_pass', lv:6},
+   {w:6,  t:'你寿元到了',           r:'活了这么久,也该走了。',          to:'end_beast_old'}
+  ]},
+
+b_oppA:{ title:'机 遇', kind:'机 遇 · 魂 兽', who:'', pow:'',
+  text:'雪原上的一切都是赌。',
+  segs:[
+   {w:15, t:'你吃到一株百年灵草',   r:'筋骨里像有东西在长。',            lv:3, skip:20, to:'YEAR', set:{tags:['灵草根骨']}},
+   {w:14, t:'你找到一片没有人的猎场', r:'你胖了一圈又一圈。',            lv:2, skip:15, to:'YEAR'},
+   {w:12, t:'你躲过了一场猎魂潮',   r:'整片林子都空了,你还活着。',      lv:2, skip:10, to:'YEAR', set:{tags:['躲过猎魂潮']}},
+   {w:11, t:'一头老兽把一生给了你', r:'它活了两千年,最后选了你。',      lv:6, skip:100, to:'YEAR', set:{tags:['接过老兽的一生']}},
+   {w:10, t:'你捡到一块魂骨',       r:'它冻得你爪子发麻。',              bone:1, skip:30, to:'YEAR'},
+   {w:9,  t:'你被人类的陷阱伤了',   r:'你咬断自己的腿才逃出来。',        lv:-2, skip:8,  to:'YEAR', set:{tags:['少了一条腿']}, savedBy:'冰帝记得你'},
+   {w:8,  t:'人类冲着你的魂环而来', r:'你跑掉了,但它跟了你很久。',      lv:1, skip:12, to:'YEAR', set:{tags:['被人盯上']}},
+   {w:7,  t:'你和一头小兽定了约',   r:'它把魂灵给了你。',                spirit:'小兽', skip:20, to:'YEAR'},
+   {w:5,  t:'你摸到了一点法则的边', r:'你看不见它,但你能感觉到。',      lv:6, skip:200, to:'YEAR', set:{tags:['摸到法则']}},
+   {w:4,  t:'你带回来一块冰魂骨',   r:'它是红的,而且一直很凉。',        bone:1, lv:4, skip:80, to:'YEAR'},
+   {w:3,  t:'冰帝在你身上留了印记', r:'从此极北的风都绕着你走。',        lv:5, skip:300, to:'YEAR', set:{tags:['冰帝的印记']}},
+   {w:2,  lb:'冰帝的魂灵', t:'冰帝把她的魂灵给了你一半', r:'整片雪原都安静了。', spirit:'冰帝', lv:10, skip:500, to:'YEAR', set:{tags:['冰帝的魂灵']}},
+   {w:2,  lb:'雪里没出来', t:'你被那场雪埋在了下面', r:'三年后冰化了,你没能出来。', to:'end_dead'}
+  ]},
+
+b_oppB:{ title:'机 遇', kind:'机 遇 · 魂 兽(深)', who:'', pow:'',
+  text:'活到这个年限,还能撞上机缘,就是命。',
+  segs:[
+   {w:14, t:'你悟出一条法则',       r:'它在你身上刻下来了。',            lv:8, skip:5000, to:'YEAR', set:{tags:['有一条法则']}},
+   {w:13, t:'你找到一处没人的猎场', r:'你在那里住了一千年。',            lv:4, skip:3000, to:'YEAR'},
+   {w:12, t:'你捡到一块万年魂骨',   r:'它比你的胳膊还沉。',              bone:1, skip:4000, to:'YEAR'},
+   {w:11, t:'你被天劫劈碎了半身',   r:'你花了几千年才重新长出来。',      lv:-3, skip:2000, to:'YEAR', set:{tags:['被天劫重创']}, savedBy:'龙族血脉'},
+   {w:10, t:'你吞了一头十万年的一角', r:'那一口把你撑了五千年。',        lv:8, skip:8000, to:'YEAR', set:{tags:['沾过十万年']}},
+   {w:9,  t:'你和冰帝并肩猎了一次', r:'那一次之后,极北都改了口。',      lv:8, skip:30000, to:'YEAR', set:{tags:['与冰帝并肩']}},
+   {w:8,  t:'你在冰窟里熬了很多年', r:'化开的时候,外面换了天。',        lv:4, skip:2000, to:'YEAR', set:{tags:['冰窟里出来的']}},
+   {w:7,  t:'你和一头凶兽定了契约', r:'它成了你的魂灵。',                spirit:'凶兽', lv:6, skip:6000, to:'YEAR', set:{tags:['凶兽魂灵']}},
+   {w:6,  t:'你摸到了第二条法则',   r:'两条法则在手,你抵得上半个神。',  lv:12, skip:20000, to:'YEAR', set:{tags:['有两条法则']}},
+   {w:5,  t:'你进了一次神界的边角', r:'你在那里站了三天。',              lv:8, skip:50000, to:'YEAR', set:{tags:['摸过神界']}},
+   {w:4,  t:'你带回来一块百万年的骨头', r:'你不确定它是什么。',          bone:1, lv:10, skip:100000, to:'YEAR'},
+   {w:3,  t:'你在神位前面站了一夜', r:'你什么都没做,只是看着。',        lv:8, skip:30000, to:'YEAR', set:{tags:['在神位前站过']}},
+   {w:2,  lb:'死于绝地', t:'你在那处绝地里,没能走出来', r:'禁区里的东西从来不放人。', to:'end_dead'}
+  ]},
+
+b_oppC:{ title:'机 遇', kind:'机 遇 · 神 界 边 角', who:'', pow:'',
+  text:'到了这个份上,能叫机缘的东西不多了。',
+  segs:[
+   {w:14, t:'你悟出了第三条法则',   r:'你笑了很久。',                    lv:12, skip:200000, to:'YEAR', set:{tags:['有三条法则']}},
+   {w:13, t:'你和神界谈了一次',     r:'他们说:你可以上来,但要先放弃一些东西。', lv:8, skip:300000, to:'YEAR', set:{tags:['和神界谈过']}},
+   {w:12, t:'你在神位前面站了一夜', r:'你什么都没做,只是看着。',        lv:8, skip:100000, to:'YEAR', set:{tags:['在神位前站过']}},
+   {w:11, t:'你被天劫劈回了兽形',   r:'你本来已经化形了两次。',          lv:-4, skip:50000, to:'YEAR', set:{tags:['被劈回过兽形']}},
+   {w:10, t:'你吞了一头百万年的一角', r:'那一口把你撑了十万年。',        lv:12, skip:400000, to:'YEAR', set:{tags:['吞过百万年']}},
+   {w:9,  t:'冰帝把魂灵给了你一半', r:'整片雪原都安静了。',              spirit:'冰帝', lv:10, skip:200000, to:'YEAR', set:{tags:['冰帝的魂灵']}},
+   {w:9,  t:'你的领域彻底长成了',   r:'极北之地成了你的东西。',          lv:12, skip:300000, to:'YEAR', set:{tags:['完整领域']}},
+   {w:8,  t:'你把极北改成了自己的样子', r:'那儿已经是另一个世界了。',    lv:8, skip:400000, to:'YEAR', set:{tags:['极北之主']}},
+   {w:7,  t:'你在神界边角留了一个记号', r:'那是你自己的名字。',          lv:10, skip:150000, to:'YEAR', set:{tags:['在神界留过名']}},
+   {w:6,  t:'你和神界的人打了一次', r:'你没赢,但那个位置也没赢。',      lv:8, skip:250000, to:'YEAR', set:{tags:['和神界打过']}},
+   {w:5,  t:'你把一生传给了另一头小兽', r:'像当年那头老兽对你做的一样。', to:'end_beast_pass', lv:8},
+   {w:4,  t:'你带着冰帝去了神界一次', r:'你们要一个说法。',              to:'end_beast_ice', lv:12, set:{tags:['一起上过神界']}},
+   {w:3,  t:'渡劫飞升',             r:'极北的雪,第一次化了一半。',      to:'end_beast_up', lv:14, set:{tags:['飞升']}},
+   {w:2,  lb:'归于尘埃', t:'你主动把自己散了,还给这个世界', r:'极北下了一整年的雪。', to:'end_beast_pass', lv:6}
+  ]},
+
+b_hunt:{ title:'猎 食', kind:'猎 食 · 魂 兽', who:'', pow:'',
+  text:'魂兽的每一次捕猎,都可能爆出魂骨,也可能遇上不该遇上的东西。',
+  segs:[
+   {w:18, t:'你咬死了一头十年魂兽',   r:'没爆什么,但吃饱了。',            lv:1, skip:10,  to:'YEAR'},
+   {w:15, t:'你咬死了一头百年魂兽',   r:'它掉下来一块魂骨。',              bone:1, skip:40,  to:'YEAR'},
+   {w:13, t:'你咬死了一头千年魂兽',   r:'它有魂骨,而且是冰属性的。',      bone:1, skip:200, to:'YEAR'},
+   {w:11, t:'你咬死了一头万年魂兽',   r:'它身上掉下来一块黑的。',          bone:1, skip:2000, to:'YEAR', set:{tags:['屠过万年']}},
+   {w:9,  t:'你咬死了一头十万年魂兽', r:'它的魂骨是红的。',                bone:1, lv:6, skip:30000, to:'YEAR', set:{tags:['屠过十万年']}},
+   {w:8,  t:'你连骨带血都吞了',       r:'它的年限全归了你。',              lv:5, skip:100, to:'YEAR', set:{tags:['吞过同阶']}},
+   {w:7,  t:'你遇到一头幼兽,放它走了', r:'它跟了你一路。',               spirit:'幼兽', skip:20, to:'YEAR', set:{tags:['养过崽子']}},
+   {w:6,  t:'你和一头凶兽定了契约', r:'它成了你的魂灵。',                spirit:'凶兽', lv:6, skip:5000, to:'YEAR', set:{tags:['凶兽魂灵']}},
+   {w:5,  t:'你被猎物反杀',         r:'你少了一条腿。',                  lv:-3, skip:50,  to:'YEAR', set:{tags:['少了一条腿']}},
+   {w:4,  t:'你咬死了一头异种',     r:'它身上有两块魂骨。',              bone:2, lv:5, skip:10000, to:'YEAR', set:{tags:['猎过异种']}},
+   {w:3,  t:'你遇上了不该遇上的东西', r:'你连它的样子都没看清。',        to:'end_dead'},
+   {w:1,  lb:'契约·冰帝', t:'极北之地的冰帝,给了你一个魂灵', r:'整片雪原都安静了。', spirit:'冰帝', lv:12, skip:100000, to:'YEAR', set:{tags:['冰帝的魂灵']}}
+  ]},
+
+/* =========================================================
+   人 线 终 局(等级 95+ 且九环齐了)
+   ========================================================= */
+god_final:{ title:'神 位 之 争', kind:'终 局 · 神 位', who:'', pow:'',
+  text:'大陆上最高的那个位置,只能有一个名字。',
+  segs:[
+   {w:20, t:'神位认主,你踏入神界', r:'天开了。你往上走的时候,没有回头。', to:'end_god'},
+   {w:16, t:'你成了神,却没人记得你', r:'神界很大。你站在里面,很安静。', to:'end_god'},
+   {w:14, t:'你把神位让给了别人',   r:'你看着他走上去,然后转身下山。',  to:'end_title'},
+   {w:13, t:'神位在你眼前碎了',     r:'你伸手去接,抓到的是灰。',        to:'end_fail'},
+   {w:12, t:'你选择留下,不争了',   r:'你转身走回人间。这一次是自愿的。', to:'end_title'},
+   {w:10, t:'你和神位同归于尽',     r:'上面那一层,黑了很久。',          to:'end_dead'},
+   {w:8,  t:'你带着爱人一起上去了', r:'神界为一个位置改了规矩。',        to:'end_god'},
+   {w:7,  lb:'两个都要', t:'你没要神位,你把它掰成了两半', r:'一半留在天上,一半带回人间。', to:'end_god'}
+  ]},
+
+/* =========================================================
+   结 局
+   ========================================================= */
+end_god:{ end:true, kind:'good', title:'成 神',
+  sub:'你走上了那条路,再也没有回头',
+  body:'神界从此多了一个名字。<br><br>很多年以后,人间的书里,你的那一页很长 —— 长到别人只能记住开头和结尾。<br><br>你走过的路:{path}'},
+
+end_title:{ end:true, kind:'good', title:'一 代 宗 师',
+  sub:'你没有上天。你留在了人间',
+  body:'神位就在眼前,你说了一句:不必了。<br><br>你回去开宗立派,把你会的全教了出去。你的徒弟、徒弟的徒弟,把大陆撑了几百年。<br><br>你没有成神。但每一代的强者,都会先听一遍你的名字。<br><br>你走过的路:{path}'},
+
+end_old:{ end:true, kind:'good', title:'寿 终 正 寝',
+  sub:'你活了很久,也该走了',
+  body:'你走的时候,身边有很多人。<br><br>你这一生没走到神位前面,但你走过的每一步,都算数。<br><br>你走过的路:{path}'},
+
+end_fail:{ end:true, kind:'bad', title:'成 神 失 败',
+  sub:'神位就在眼前,你没拿到',
+  body:'不是你不够强,是那个位置本来就不打算给你。<br><br>你走过的路:{path}'},
+
+end_dead:{ end:true, kind:'bad', title:'半 路 死 了',
+  sub:'没走到那一步',
+  body:'神位离你太远。你死在半路上,和绝大多数人一样。<br><br>你走过的路:{path}'},
+
+end_beast_lord:{ end:true, kind:'good', title:'极 北 之 主',
+  sub:'没有神位,也没有碑 —— 但整片雪原都听你的',
+  body:'你没有上天。你留在了极北,把这片冻了几百万年的地方,活成了自己的院子。<br><br>后来有人在雪里见过你一次。他说你那天什么也没做,只是站在那里,风就停了。<br><br>你走过的路:{path}'},
+
+end_beast_ice:{ end:true, kind:'good', title:'双 神 并 立',
+  sub:'一个神位,两个人',
+  body:'神界为一个位置改了规矩 —— 这是头一回。<br><br>你和她都没打算低头。他们最后给了两个。<br><br>极北的雪照旧下,只是从此有了两道影子。<br><br>你走过的路:{path}'},
+
+end_beast_god:{ end:true, kind:'good', title:'吞 神',
+  sub:'你不是被选中的,你是自己走上去的',
+  body:'没有谁的认可,没有谁的点名。你走到那个位置前面,把它拿走了。<br><br>神界安静了很久。<br><br>你走过的路:{path}'},
+
+end_beast_up:{ end:true, kind:'good', title:'飞 升',
+  sub:'天劫落下的那一刻,你迎着走了上去',
+  body:'雷打在你身上,你往前。再打,你还往前。<br><br>极北的雪,在这一天化了一半。<br><br>你走过的路:{path}'},
+
+end_beast_pass:{ end:true, kind:'good', title:'归 于 尘 埃',
+  sub:'你把这一身年限,还给了这个世界',
+  body:'你把自己散了。散了之后,极北下了一整年的雪 —— 那是这个世界在替你收尾。<br><br>很久以后,一头小兽在雪里发抖。它身上有什么东西,和当年你身上的很像。<br><br>你走过的路:{path}'},
+
+end_beast_old:{ end:true, kind:'good', title:'寿 终',
+  sub:'你活了太久,该歇了',
+  body:'你活了几百万年。最后那一年,你没做什么特别的事,只是趴在雪里,看了一整个冬天的雪。<br><br>你走过的路:{path}'}
+};
+
+/* =========================================================
+   三、起
+   ========================================================= */
+S = { who:'', pow:'', year:0, lv:1, rings:[], bones:0, spirits:[], tags:[], steps:[],
+      life:99, skip:1, beast:false, lastRingAt:0, godAt:0,
+      sex:'', mileAt:0, hx:false, hxTried:0, hxDone:0, sinceMile:0, jump:0, adv:0 };
+$('hub').onclick = () => spin(true);
+window.addEventListener('resize', redraw);
+goTo('start');
+
+/* 给测试用 */
+window.__NODES = NODES;
+window.__go = goTo;
+window.__S = () => S;
+window.__year = yearWheel;
+</script>
+</body>
+</html>
