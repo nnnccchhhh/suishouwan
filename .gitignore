@@ -1,3 +1,6 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# 本地小工具，不发布到网站
+更新网站.bat
