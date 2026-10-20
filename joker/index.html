@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>小丑牌 · 单机</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:radial-gradient(circle at 50% -10%,#123a2e 0%,#08160f 60%,#040b08 100%);
+  color:#e9e4d4;
+  font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+  overflow-x:hidden;
+  display:flex;justify-content:center;
+  min-height:100vh;
+}
+#app{width:100%;max-width:560px;padding:8px 10px 14px;position:relative}
+.hide{display:none!important}
+
+/* ============ 通用按钮 ============ */
+button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none}
+.big{
+  display:block;width:100%;padding:15px;margin-top:12px;border-radius:12px;
+  background:linear-gradient(180deg,#f0c14b,#c98a12);color:#2a1a00;
+  font-size:17px;font-weight:900;letter-spacing:2px;
+  box-shadow:0 4px 0 #8a5d08,0 10px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.5);
+  transition:transform .1s;
+}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 #8a5d08,0 4px 10px rgba(0,0,0,.4)}
+.big.ghost{background:transparent;border:1px solid rgba(233,228,212,.28);color:#c9c2ae;
+  box-shadow:none;font-size:15px;padding:12px}
+.big:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ============ 菜单 ============ */
+#scrMenu{padding-top:0;min-height:calc(100dvh - 22px);display:flex;flex-direction:column;justify-content:center;text-align:center}
+#scrMenu h1{
+  font-size:44px;letter-spacing:8px;font-weight:900;
+  background:linear-gradient(180deg,#ffe9a8,#e0a418);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 10px rgba(0,0,0,.6));
+}
+#scrMenu .sub{color:#8fa39a;font-size:14px;margin-top:10px;letter-spacing:1px}
+#scrMenu .card-art{
+  width:120px;height:170px;margin:22px auto 0;border-radius:12px;
+  background:linear-gradient(160deg,#c0392b,#7b1f14);
+  border:3px solid #f0e0b8;position:relative;
+  box-shadow:0 18px 40px rgba(0,0,0,.6);
+  animation:bob 3.2s ease-in-out infinite;
+}
+#scrMenu .card-art::before{
+  content:'★';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:64px;color:#ffd977;text-shadow:0 0 24px rgba(255,217,119,.6);
+}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-10px) rotate(3deg)}}
+#scrMenu .hint{color:#6d7f76;font-size:12px;margin-top:16px;line-height:1.7}
+
+/* ============ 顶栏 ============ */
+.top{display:flex;gap:8px;align-items:stretch}
+.blindbox{
+  flex:1;padding:8px 10px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.35));
+  box-shadow:inset 0 0 0 1px rgba(233,228,212,.12);
+}
+.row1{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+#blindName{font-weight:900;color:#ffd977;letter-spacing:1px}
+.spd{font-size:10.5px;color:#a9b8ae;background:rgba(255,255,255,.07);
+  padding:1px 7px;border-radius:6px;cursor:pointer;border:1px solid rgba(255,255,255,.12)}
+.spd:active{background:rgba(255,255,255,.18)}
+#anteTag{color:#8fa39a}
+.goal{display:flex;align-items:baseline;gap:5px;margin-top:2px;font-family:Consolas,monospace}
+.goal b{font-size:clamp(19px,5.4vw,24px);font-weight:900;letter-spacing:-.5px}
+#scoreNow{color:#7fd0ff}
+#scoreTarget{color:#ffd977}
+.goal span{color:#5d6f66;font-size:13px}
+.bar{height:5px;border-radius:3px;background:rgba(0,0,0,.5);margin-top:5px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,#3d7fd6,#7fd0ff);transition:width .35s}
+.bar i.full{background:linear-gradient(90deg,#2f9e63,#7fe0a0)}
+#bossDesc{margin-top:6px;font-size:11.5px;line-height:1.45;color:#ffb4a8;
+  background:rgba(120,20,20,.32);border-radius:7px;padding:5px 7px}
+
+.chipsrow{display:flex;flex-direction:column;gap:4px;width:78px}
+.stat{
+  flex:1;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:4px;
+  background:rgba(0,0,0,.4);box-shadow:inset 0 0 0 1px rgba(233,228,212,.1);
+}
+.stat b{font-size:16px;font-weight:900;font-family:Consolas,monospace}
+.stat span{font-size:10.5px;color:#8fa39a}
+#stMoney{color:#ffd977}
+
+/* ============ 小丑区 ============ */
+.jokerzone{margin-top:9px;padding:7px;border-radius:12px;
+  background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(233,228,212,.08)}
+.jslots{display:flex;gap:6px;justify-content:center}
+.jslot{
+  width:clamp(42px,11.4vw,54px);height:clamp(58px,15.6vw,74px);border-radius:8px;
+  border:1px dashed rgba(233,228,212,.16);background:rgba(255,255,255,.02);
+  display:flex;align-items:center;justify-content:center;position:relative;flex:0 0 auto;
+}
+.jslot .jk{position:absolute;font-size:8.5px;bottom:3px;left:0;right:0;text-align:center;
+  color:#cfc7ae;line-height:1.15;overflow:hidden;height:20px}
+.jslot .jg{position:absolute;top:3px;left:0;right:0;text-align:center;font-size:15px}
+.jslot.owned{
+  border:1px solid rgba(255,217,119,.5);border-style:solid;
+  background:linear-gradient(160deg,#4a2b6b,#2a1740);
+  box-shadow:0 2px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.15);
+}
+.jslot.pop{animation:pop .35s}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.jslot.fire{box-shadow:0 0 0 2px #ffd977,0 0 18px rgba(255,217,119,.75)}
+
+/* ============ 计分区 ============ */
+.scorestage{
+  margin-top:9px;padding:10px 12px;border-radius:12px;text-align:center;
+  background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,.22));
+  box-shadow:inset 0 0 0 1px rgba(233,228,212,.1);
+  flex:0 0 auto;min-height:112px;display:flex;flex-direction:column;justify-content:center;
+}
+.handname{font-size:13px;letter-spacing:2px;color:#a9b8ae;font-weight:700;
+  text-shadow:0 1px 3px #000}
+.handname b{color:#ffd977}
+.calc{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:5px}
+.pieces{
+  min-width:84px;padding:4px 10px;border-radius:9px;position:relative;
+  font-family:Consolas,monospace;
+}
+.pieces b{display:block;font-size:clamp(21px,6vw,27px);font-weight:900;line-height:1.05}
+.pieces span{font-size:10px;opacity:.75;letter-spacing:1px}
+.pieces.chips{background:linear-gradient(180deg,#2f6fd0,#1a4a96);
+  box-shadow:0 3px 0 #10305f,inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.pieces.mult{background:linear-gradient(180deg,#d8453f,#a02020);
+  box-shadow:0 3px 0 #6b1010,inset 0 1px 0 rgba(255,255,255,.35);color:#fff}
+.pieces.hit{animation:hit .22s}
+@keyframes hit{0%{transform:scale(1)}45%{transform:scale(1.16)}100%{transform:scale(1)}}
+.times{font-size:22px;font-weight:900;color:#ffd977;text-shadow:0 2px 6px #000}
+.total{
+  margin-top:6px;font-size:clamp(20px,5.6vw,25px);font-weight:900;color:#ffd977;
+  font-family:Consolas,monospace;letter-spacing:1px;
+  text-shadow:0 0 18px rgba(255,217,119,.55);
+}
+.total.hit{animation:hit .3s}
+
+/* ============ 中间出牌台 ============ */
+.playarea{
+  margin-top:9px;flex:1;min-height:126px;
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px;
+  border-radius:14px;padding:12px 8px 26px;position:relative;
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,255,255,.045),rgba(0,0,0,.22));
+  box-shadow:inset 0 0 0 1px rgba(233,228,212,.07);
+}
+.playarea .pahint{color:#5d6f66;font-size:12.5px;letter-spacing:1px;line-height:1.8;text-align:center}
+.playarea .card{width:clamp(42px,11.6vw,54px);height:clamp(60px,16.4vw,78px);cursor:default}
+.playarea .card .r{font-size:clamp(17px,4.9vw,22px)}
+.playarea .card .s{font-size:clamp(15px,4.5vw,21px)}
+.playarea .ptag{
+  position:absolute;left:0;right:0;bottom:6px;text-align:center;
+  font-size:11.5px;color:#8fa39a;letter-spacing:1px;
+}
+.playarea .ptag b{color:#ffd977}
+
+/* ============ 本注记录 ============ */
+.logbox{
+  margin-top:9px;flex:0 0 auto;max-height:20vh;overflow-y:auto;
+  border-radius:12px;padding:6px 10px 7px;
+  background:rgba(0,0,0,.2);
+  box-shadow:inset 0 0 0 1px rgba(233,228,212,.07);
+}
+.logbox h4{font-size:10.5px;color:#6d7f76;letter-spacing:2px;font-weight:700;margin-bottom:4px}
+.logrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 0;
+  border-bottom:1px dashed rgba(255,255,255,.06)}
+.logrow:last-child{border-bottom:none}
+.logrow .lt{color:#cfc7ae;font-weight:700;min-width:52px}
+.logrow .lk{color:#8fa39a;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logrow .ls{color:#ffd977;font-weight:900;font-family:Consolas,monospace}
+.logempty{color:#5d6f66;font-size:12px;text-align:center;padding:16px 0 0}
+
+/* ============ 手牌 ============ */
+#scrGame{display:flex;flex-direction:column;min-height:calc(100dvh - 22px)}
+.handzone{margin-top:8px;display:flex;align-items:flex-end;justify-content:center;padding-top:6px;min-height:clamp(84px,22vw,104px)}
+.cards{display:flex;gap:3px;justify-content:center;align-items:flex-end;flex-wrap:nowrap}
+.card{
+  width:clamp(38px,10.6vw,46px);height:clamp(56px,15.2vw,66px);
+  border-radius:7px;position:relative;flex:0 0 auto;
+  background:linear-gradient(170deg,#fffdf6,#e8e2d0);
+  border:1px solid #b9b09a;
+  box-shadow:0 3px 7px rgba(0,0,0,.5);
+  transition:transform .13s ease,box-shadow .13s ease;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  user-select:none;cursor:pointer;color:#171717;
+}
+.card .r{
+  font-size:clamp(15px,4.3vw,19px);font-weight:800;line-height:1;
+  font-family:"Segoe UI",Arial,Helvetica,"Microsoft YaHei",sans-serif;
+  font-variant-numeric:tabular-nums;letter-spacing:-.5px;
+}
+.card .s{font-size:clamp(14px,4vw,18px);line-height:1;margin-top:1px}
+.card.red{color:#c0281f}
+.card.sel{transform:translateY(-14px);box-shadow:0 10px 18px rgba(0,0,0,.6),0 0 0 2px #ffd977}
+.card.score{box-shadow:0 0 0 2px #7fd0ff,0 0 16px rgba(127,208,255,.7);transform:translateY(-8px)}
+.card.dead{opacity:.32;transform:none}
+.card .plus{
+  position:absolute;top:-6px;right:-4px;font-size:10px;font-weight:900;color:#7fd0ff;
+  background:#0a1a12;border-radius:6px;padding:0 3px;opacity:0
+}
+.card .plus.on{opacity:1;animation:hit .3s}
+
+/* ============ 操作 ============ */
+.actions{display:flex;gap:8px;margin-top:12px}
+.act{
+  flex:1;padding:11px 4px 10px;border-radius:12px;font-weight:900;
+  box-shadow:0 4px 0 rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.28);
+  transition:transform .1s;display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.act span{font-size:16px;letter-spacing:2px}
+.act small{font-size:10px;opacity:.72;letter-spacing:.5px}
+.act:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.45)}
+.act.play{background:linear-gradient(180deg,#4f9df7,#1f6bd0);color:#04192b}
+.act.disc{background:linear-gradient(180deg,#f4908a,#c93b33);color:#fff}
+.act.sort{background:linear-gradient(180deg,#8f9aa8,#5a6672);color:#fff;flex:.72}
+.act:disabled{opacity:.36;cursor:not-allowed;transform:none}
+
+/* ============ 商店 / 弹窗 ============ */
+.modal{
+  position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+  background:rgba(2,8,5,.82);padding:16px;backdrop-filter:blur(3px);
+}
+.panel{
+  width:100%;max-width:430px;max-height:88vh;overflow-y:auto;
+  border-radius:16px;padding:18px;
+  background:linear-gradient(180deg,#1b2d24,#0d1813);
+  box-shadow:0 24px 60px rgba(0,0,0,.8),inset 0 0 0 1px rgba(233,228,212,.14);
+}
+.panel h2{font-size:19px;letter-spacing:3px;text-align:center;color:#ffd977;font-weight:900}
+.panel .psub{text-align:center;color:#8fa39a;font-size:12.5px;margin-top:7px;line-height:1.6}
+.panel .money{text-align:center;font-size:15px;color:#ffd977;font-weight:900;margin-top:8px;
+  font-family:Consolas,monospace}
+
+.shoplist{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.shopitem{
+  display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:11px;
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(233,228,212,.12);
+  text-align:left;width:100%;
+}
+.shopitem.bought{opacity:.34;pointer-events:none}
+.shopitem .ic{
+  width:42px;height:56px;border-radius:7px;flex:0 0 auto;display:flex;
+  align-items:center;justify-content:center;font-size:20px;
+  background:linear-gradient(160deg,#4a2b6b,#2a1740);
+  box-shadow:inset 0 0 0 1px rgba(255,217,119,.4);
+}
+.shopitem .ic.planet{background:linear-gradient(160deg,#1f5c8c,#0d2f4d);
+  box-shadow:inset 0 0 0 1px rgba(127,208,255,.5)}
+.shopitem .txt{flex:1;min-width:0}
+.shopitem .nm{font-size:13.5px;font-weight:900;color:#ffe9b0}
+.shopitem .ds{font-size:11.5px;color:#a9b8ae;line-height:1.45;margin-top:2px}
+.shopitem .pr{font-size:14px;font-weight:900;color:#7fe0a0;font-family:Consolas,monospace;
+  flex:0 0 auto}
+.shopitem .pr.no{color:#e06a6a}
+.rewrow{display:flex;justify-content:space-between;font-size:13px;padding:5px 2px;
+  color:#c9c2ae;font-family:Consolas,monospace}
+.rewrow b{color:#ffd977}
+
+.jokerdetail{margin-top:10px;font-size:12px;color:#9fb0a6;line-height:1.6;text-align:center}
+
+/* ============ 飘字 ============ */
+.float{
+  position:fixed;z-index:60;font-weight:900;font-size:22px;color:#ffd977;
+  pointer-events:none;text-shadow:0 2px 10px #000;
+  animation:fly .9s ease-out forwards;
+}
+@keyframes fly{0%{transform:translate(-50%,0);opacity:1}
+  100%{transform:translate(-50%,-70px);opacity:0}}
+
+@media (max-width:380px){
+  .chipsrow{width:66px}
+  .act span{font-size:14.5px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= 菜单 ================= -->
+  <div class="screen" id="scrMenu">
+    <h1>小丑牌</h1>
+    <div class="sub">出牌 · 筹码 × 倍率 · 打穿八注盲注</div>
+    <div class="card-art"></div>
+    <button class="big" id="btnStart">开始新的一局</button>
+    <button class="big ghost hide" id="btnResume">继续上次进度</button>
+    <p class="hint">点牌选中（最多 5 张）→ 点「出牌」<br>分不够就先点「弃牌」换牌<br>每通过一注可以进商店买小丑牌</p>
+  </div>
+
+  <!-- ================= 游戏 ================= -->
+  <div class="screen hide" id="scrGame">
+    <div class="top">
+      <div class="blindbox">
+        <div class="row1"><span id="blindName">小盲注</span><span class="spd" id="speedBtn">速度 中</span><span id="anteTag">第 1 注</span></div>
+        <div class="goal"><b id="scoreNow">0</b><span>/</span><b id="scoreTarget">300</b></div>
+        <div class="bar"><i id="scoreBar"></i></div>
+        <div id="bossDesc" class="hide"></div>
+      </div>
+      <div class="chipsrow">
+        <div class="stat"><b id="stHands">4</b><span>出牌</span></div>
+        <div class="stat"><b id="stDisc">3</b><span>弃牌</span></div>
+        <div class="stat"><b id="stMoney">4</b><span>金钱</span></div>
+      </div>
+    </div>
+
+    <div class="jokerzone"><div class="jslots" id="jslots"></div></div>
+
+    <div class="playarea" id="playArea"></div>
+
+    <div class="scorestage">
+      <div class="handname" id="handName">选牌看牌型</div>
+      <div class="calc">
+        <div class="pieces chips" id="pieceChips"><b id="calcChips">0</b><span>筹码</span></div>
+        <div class="times">×</div>
+        <div class="pieces mult" id="pieceMult"><b id="calcMult">0</b><span>倍率</span></div>
+      </div>
+      <div class="total" id="calcTotal">—</div>
+    </div>
+
+    <div class="logbox" id="logbox"></div>
+
+    <div class="handzone"><div class="cards" id="handCards"></div></div>
+
+    <div class="actions">
+      <button class="act play" id="btnPlay" disabled><span>出 牌</span><small id="playHint">选牌</small></button>
+      <button class="act disc" id="btnDiscard" disabled><span>弃 牌</span><small>换牌</small></button>
+      <button class="act sort" id="btnSort"><span>排 序</span><small>整理</small></button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal hide" id="modal"><div class="panel" id="panel"></div></div>
+
+<script>
+/* =======================================================================
+   小丑牌 · 单机版
+   规则核心：出 1~5 张牌 → 判定牌型 → (基础筹码 + 牌面筹码 + 小丑加成)
+             × (基础倍率 + 小丑加成) = 本手得分，累加到盲注目标
+   ======================================================================= */
+
+/* ------------------------- 基础数据 ------------------------- */
+const RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const SUITS = ['♠','♥','♦','♣'];
+const RANKVAL = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
+const RANKCHIP = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':10,'Q':10,'K':10,'A':11};
+
+/* 牌型：基础筹码/倍率 + 每升一级的增量 */
+const HANDS = {
+  high:     {name:'高牌',   chips:5,   mult:1, lc:10, lm:1},
+  pair:     {name:'一对',   chips:10,  mult:2, lc:15, lm:1},
+  two:      {name:'两对',   chips:20,  mult:2, lc:20, lm:1},
+  three:    {name:'三条',   chips:30,  mult:3, lc:20, lm:2},
+  straight: {name:'顺子',   chips:30,  mult:4, lc:30, lm:3},
+  flush:    {name:'同花',   chips:35,  mult:4, lc:15, lm:2},
+  full:     {name:'葫芦',   chips:40,  mult:4, lc:25, lm:2},
+  four:     {name:'四条',   chips:60,  mult:7, lc:30, lm:3},
+  sflush:   {name:'同花顺', chips:100, mult:8, lc:40, lm:4},
+};
+const HAND_ORDER = ['high','pair','two','three','straight','flush','full','four','sflush'];
+
+/* 小丑牌定义
+   addChips(ctx,inst) → 加筹码
+   addMult (ctx,inst) → 加倍率
+   xMult   (ctx,inst) → 倍率相乘（返回 1 = 不生效）
+   ctx = {cards:参与计分的牌, all:本次打出的牌, type, n, G}
+*/
+const JOKERS = [
+  /* --- 筹码系 --- */
+  {id:'anvil',  name:'铁砧',    cost:4,  rar:'common',   g:'⚒', desc:'+50 筹码',
+    addChips:()=>50},
+  {id:'brick',  name:'砖墙',    cost:5,  rar:'common',   g:'🧱', desc:'+80 筹码',
+    addChips:()=>80},
+  {id:'spade',  name:'黑桃控',  cost:5,  rar:'common',   g:'♠', desc:'每张打出的 ♠ +32 筹码',
+    addChips:x=>x.cards.filter(c=>c.s==='♠').length*32},
+  {id:'club',   name:'草花控',  cost:5,  rar:'common',   g:'♣', desc:'每张打出的 ♣ +26 筹码',
+    addChips:x=>x.cards.filter(c=>c.s==='♣').length*26},
+  {id:'ace',    name:'王牌',    cost:6,  rar:'common',   g:'A', desc:'每张打出的 A +45 筹码',
+    addChips:x=>x.cards.filter(c=>c.r==='A').length*45},
+  {id:'face',   name:'面相',    cost:6,  rar:'common',   g:'👑', desc:'每张打出的 J / Q / K +22 筹码',
+    addChips:x=>x.cards.filter(c=>['J','Q','K'].includes(c.r)).length*22},
+  {id:'even',   name:'偶数癖',  cost:5,  rar:'common',   g:'2', desc:'每张打出的偶数牌 +18 筹码',
+    addChips:x=>x.cards.filter(c=>['2','4','6','8','10'].includes(c.r)).length*18},
+  {id:'lowcard',name:'小牌堆',  cost:6,  rar:'common',   g:'🔻', desc:'每张打出的 2~5 +30 筹码',
+    addChips:x=>x.cards.filter(c=>RANKVAL[c.r]<=5).length*30},
+
+  /* --- 倍率系（加法） --- */
+  {id:'slab',   name:'石板',    cost:4,  rar:'common',   g:'▮', desc:'+5 倍率',
+    addMult:()=>5},
+  {id:'heart',  name:'红桃控',  cost:5,  rar:'common',   g:'♥', desc:'每张打出的 ♥ +3 倍率',
+    addMult:x=>x.cards.filter(c=>c.s==='♥').length*3},
+  {id:'diamond',name:'方块控',  cost:5,  rar:'common',   g:'♦', desc:'每张打出的 ♦ +3 倍率',
+    addMult:x=>x.cards.filter(c=>c.s==='♦').length*3},
+  {id:'odd',    name:'奇数癖',  cost:5,  rar:'common',   g:'3', desc:'每张打出的奇数牌 +2 倍率',
+    addMult:x=>x.cards.filter(c=>['3','5','7','9'].includes(c.r)).length*2},
+  {id:'pairfan',name:'对子迷',  cost:6,  rar:'uncommon', g:'▣', desc:'打出「一对」时 +14 倍率',
+    addMult:x=>x.type==='pair'?14:0},
+  {id:'threefan',name:'三连迷', cost:6,  rar:'uncommon', g:'▤', desc:'打出「三条」时 +22 倍率',
+    addMult:x=>x.type==='three'?22:0},
+  {id:'strfan', name:'直尺',    cost:6,  rar:'uncommon', g:'📏', desc:'打出「顺子」时 +20 倍率',
+    addMult:x=>x.type==='straight'?20:0},
+  {id:'flfan',  name:'刷子',    cost:6,  rar:'uncommon', g:'🖌', desc:'打出「同花」时 +24 倍率',
+    addMult:x=>x.type==='flush'?24:0},
+  {id:'twopian',name:'双对迷',  cost:7,  rar:'uncommon', g:'▥', desc:'打出「两对」时 +18 倍率',
+    addMult:x=>x.type==='two'?18:0},
+  {id:'fullfan',name:'葫芦迷',  cost:7,  rar:'uncommon', g:'▦', desc:'打出「葫芦」时 +26 倍率',
+    addMult:x=>x.type==='full'?26:0},
+  {id:'miser',  name:'守财奴',  cost:6,  rar:'uncommon', g:'💤', desc:'每点剩余出牌次数 +4 倍率',
+    addMult:x=>x.G.hands*4},
+
+  /* --- 倍率系（乘法） --- */
+  {id:'lone',   name:'孤狼',    cost:7,  rar:'uncommon', g:'🐺', desc:'只打 1 张牌时 ×3 倍率',
+    xMult:x=>x.n===1?3:1},
+  {id:'duo',    name:'双筒',    cost:7,  rar:'uncommon', g:'🎯', desc:'正好打 2 张牌时 ×2.5 倍率',
+    xMult:x=>x.n===2?2.5:1},
+  {id:'tri',    name:'三叉戟',  cost:7,  rar:'uncommon', g:'🔱', desc:'正好打 3 张牌时 ×2.5 倍率',
+    xMult:x=>x.n===3?2.5:1},
+  {id:'quat',   name:'四叶草',  cost:8,  rar:'uncommon', g:'🍀', desc:'正好打 4 张牌时 ×2 倍率',
+    xMult:x=>x.n===4?2:1},
+  {id:'rainbow',name:'彩虹',    cost:8,  rar:'uncommon', g:'🌈', desc:'四种花色都出现时 ×2 倍率',
+    xMult:x=>new Set(x.cards.map(c=>c.s)).size===4?2:1},
+  {id:'flushx', name:'同花狂热',cost:8,  rar:'uncommon', g:'🌊', desc:'「同花」×2 倍率',
+    xMult:x=>x.type==='flush'?2:1},
+  {id:'strx',   name:'顺子狂热',cost:8,  rar:'uncommon', g:'⚡', desc:'「顺子」×2.2 倍率',
+    xMult:x=>x.type==='straight'?2.2:1},
+  {id:'crown',  name:'加冕',    cost:8,  rar:'uncommon', g:'♛', desc:'×1.5 倍率',
+    xMult:()=>1.5},
+  {id:'hammer', name:'重锤',    cost:7,  rar:'uncommon', g:'🔨', desc:'打满 5 张牌时 ×2 倍率',
+    xMult:x=>x.n===5?2:1},
+  {id:'tide',   name:'潮汐',    cost:6,  rar:'common',   g:'🌊', desc:'「同花」+40 筹码',
+    addChips:x=>x.type==='flush'?40:0},
+  {id:'moon',   name:'月神',    cost:9,  rar:'rare',     g:'🌙', desc:'每张计分牌 +12 筹码、+2 倍率',
+    addChips:x=>x.cards.length*12, addMult:x=>x.cards.length*2},
+  {id:'fourx',  name:'四条狂热',cost:9,  rar:'rare',     g:'🔥', desc:'「四条」×4 倍率',
+    xMult:x=>x.type==='four'?4:1},
+  {id:'sfx',    name:'花顺狂热',cost:9,  rar:'rare',     g:'💎', desc:'「同花顺」×5 倍率',
+    xMult:x=>x.type==='sflush'?5:1},
+  {id:'gold',   name:'金色小丑',cost:12, rar:'rare',     g:'🌟', desc:'×3 倍率',
+    xMult:()=>3},
+  {id:'grinder',name:'磨坊',    cost:10, rar:'rare',     g:'⚙', desc:'每打出一次永久 +0.2 倍率（越打越强）',
+    grow:0.2, xMult:(x,inst)=>1+inst.v},
+
+  /* --- 经济系 --- */
+  {id:'greed',  name:'吝啬鬼',  cost:5,  rar:'common',   g:'💰', desc:'每次弃牌 +$1',
+    onDiscard:()=>1},
+  {id:'cashier',name:'收银员',  cost:6,  rar:'uncommon', g:'🧾', desc:'通过盲注时额外 +$4',
+    onWin:()=>4},
+  {id:'interest',name:'利息鬼', cost:7,  rar:'uncommon', g:'🏦', desc:'利息上限 +$3',
+    interest:3},
+];
+const JB = {};
+JOKERS.forEach(j=>JB[j.id]=j);
+
+/* 星球牌：升级某一种牌型 */
+const PLANETS = HAND_ORDER.map(t=>({
+  id:'p_'+t, type:t, cost:3,
+  name:HANDS[t].name+'星球',
+  desc:'「'+HANDS[t].name+'」升 1 级：+'+HANDS[t].lc+' 筹码 / +'+HANDS[t].lm+' 倍率'
+}));
+
+/* 盲注：8 注，每注 小/大/BOSS */
+const ANTE_BASE = [300, 700, 1600, 3500, 7000, 13000, 22000, 34000];
+const BOSSES = [
+  {id:'claw',  name:'钩爪',  desc:'每次出牌后随机丢掉 2 张手牌'},
+  {id:'wall',  name:'高墙',  desc:'目标分数提高到 1.6 倍', mult:1.6},
+  {id:'needle',name:'细针',  desc:'本注只有 1 次出牌机会'},
+  {id:'well',  name:'枯井',  desc:'本注不能弃牌'},
+  {id:'medium',name:'通灵师',desc:'每次必须打出 5 张牌'},
+  {id:'eye',   name:'独眼',  desc:'每种牌型本注只能打一次'},
+  {id:'echo',  name:'复读机',desc:'只能重复使用第一次打出的牌型'},
+  {id:'fog',   name:'红雾',  desc:'打出的 ♥ 牌不计筹码'},
+];
+
+/* ------------------------- 工具 ------------------------- */
+let SEED = 20261019;
+function rnd(){ SEED = (SEED * 1103515245 + 12345) & 0x7fffffff; return SEED / 0x7fffffff; }
+function ri(n){ return Math.floor(rnd()*n); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=ri(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pick(a){ return a[ri(a.length)]; }
+function el(id){ return document.getElementById(id); }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function money(n){ return '$'+n; }
+
+/* ------------------------- 牌型判定 ------------------------- */
+function isStraight(vals){
+  const v = [...vals].sort((a,b)=>a-b);
+  if (new Set(v).size !== 5) return false;
+  if (v[4]-v[0] === 4) return true;
+  /* A2345 轮子：A 当 1 */
+  return v[0]===2 && v[1]===3 && v[2]===4 && v[3]===5 && v[4]===14;
+}
+
+function evalPlay(cards){
+  const n = cards.length;
+  const rk = cards.map(c=>RANKVAL[c.r]);
+  const cnt = {};
+  rk.forEach(v=>cnt[v]=(cnt[v]||0)+1);
+  const groups = Object.keys(cnt).map(v=>({v:+v,c:cnt[v]}))
+    .sort((a,b)=> b.c-a.c || b.v-a.v);
+  const isFlush = n===5 && cards.every(c=>c.s===cards[0].s);
+  const straight = n===5 && isStraight(rk);
+
+  if (n===5 && isFlush && straight) return {type:'sflush', scoring:cards};
+  if (groups[0].c===4)              return {type:'four',   scoring:cards.filter(c=>RANKVAL[c.r]===groups[0].v)};
+  if (groups[0].c===3 && groups[1] && groups[1].c===2) return {type:'full', scoring:cards};
+  if (isFlush)                      return {type:'flush',  scoring:cards};
+  if (straight)                     return {type:'straight',scoring:cards};
+  if (groups[0].c===3)              return {type:'three',  scoring:cards.filter(c=>RANKVAL[c.r]===groups[0].v)};
+  if (groups[0].c===2 && groups[1] && groups[1].c===2)
+                                    return {type:'two',    scoring:cards.filter(c=>RANKVAL[c.r]===groups[0].v||RANKVAL[c.r]===groups[1].v)};
+  if (groups[0].c===2)              return {type:'pair',   scoring:cards.filter(c=>RANKVAL[c.r]===groups[0].v)};
+  /* 高牌：只算最大那张 */
+  let best = cards[0];
+  for (const c of cards) if (RANKVAL[c.r]>RANKVAL[best.r]) best=c;
+  return {type:'high', scoring:[best]};
+}
+
+/* ------------------------- 评分 ------------------------- */
+function scorePlay(cards){
+  const ev = evalPlay(cards);
+  const lv = S.levels[ev.type] || 1;
+  const base = HANDS[ev.type];
+  let chips = base.chips + (lv-1)*base.lc;
+  let mult  = base.mult  + (lv-1)*base.lm;
+  const log = [];
+
+  /* 1) 牌面筹码 */
+  let cardChips = 0;
+  for (const c of ev.scoring){
+    let v = RANKCHIP[c.r];
+    if (S.boss && S.boss.id==='fog' && c.s==='♥') v = 0;
+    cardChips += v;
+    log.push({k:'card', card:c, v:v});
+  }
+  chips += cardChips;
+
+  const ctx = {cards:ev.scoring, all:cards, type:ev.type, n:cards.length, G:S};
+
+  /* 2) 小丑牌效果（从左到右依次结算） */
+  for (const inst of S.jokers){
+    const d = JB[inst.id]; if (!d) continue;
+    if (d.addChips){ const v = d.addChips(ctx, inst); if (v){ chips += v; log.push({k:'jk', inst, v:v, kind:'c'}); } }
+    if (d.addMult) { const v = d.addMult(ctx, inst);  if (v){ mult  += v; log.push({k:'jk', inst, v:v, kind:'m'}); } }
+    if (d.xMult)   { const v = d.xMult(ctx, inst);    if (v && v!==1){ mult *= v; log.push({k:'jk', inst, v:v, kind:'x'}); } }
+  }
+
+  const total = Math.floor(chips * mult * 100) / 100;
+  return {ev, chips, mult, total:Math.floor(total), log};
+}
+
+/* ------------------------- 游戏状态 ------------------------- */
+let S = null;
+const SAVE_KEY = 'xiaochoupai_save_v1';
+
+function newState(){
+  return {
+    ante:1, blindIdx:0,            // 0 小盲 1 大盲 2 BOSS
+    money:4,
+    hands:4, discards:3,
+    score:0, target:300,
+    deck:[], hand:[], discardPile:[],
+    jokers:[], jokerSlots:5,
+    levels:{},
+    boss:null, bossSeen:{},        // 本注 BOSS 机制
+    playedTypes:[],
+    firstType:null,
+    phase:'play',                  // play | scoring | over
+    log:[],                        // 本注出牌记录
+    lastPlay:null,                 // 最近一次打出的牌（中间台上显示）
+    speed:1,
+    stats:{ rounds:0, bestHand:0 },
+  };
+}
+
+function buildDeck(){
+  const d = [];
+  let uid = 0;
+  for (const s of SUITS) for (const r of RANKS) d.push({r, s, uid:uid++});
+  return d;
+}
+
+function targetFor(ante, idx){
+  const b = ANTE_BASE[Math.min(ante-1, ANTE_BASE.length-1)];
+  const mul = idx===0 ? 1 : idx===1 ? 1.5 : 2;
+  return Math.round(b * mul);
+}
+
+/* ------------------------- 存档 ------------------------- */
+function save(){
+  try{
+    const c = JSON.parse(JSON.stringify(S));
+    /* 手牌里的 sel 标记不必存 */
+    c.hand.forEach(x=>delete x.sel);
+    localStorage.setItem(SAVE_KEY, JSON.stringify(c));
+  }catch(e){}
+}
+function load(){
+  try{
+    const t = localStorage.getItem(SAVE_KEY);
+    if (!t) return null;
+    const o = JSON.parse(t);
+    if (!o || !o.deck) return null;
+    return o;
+  }catch(e){ return null; }
+}
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+/* ------------------------- 流程 ------------------------- */
+function startGame(fresh){
+  if (fresh){
+    S = newState();
+    HAND_ORDER.forEach(t=>S.levels[t]=1);
+    S.deck = shuffle(buildDeck());
+  }
+  el('scrMenu').classList.add('hide');
+  el('scrGame').classList.remove('hide');
+  beginBlind();
+}
+
+function beginBlind(){
+  const idx = S.blindIdx;
+  S.target = targetFor(S.ante, idx);
+  S.boss = idx===2 ? BOSSES[(S.ante-1) % BOSSES.length] : null;
+  if (S.boss && S.boss.mult) S.target = Math.round(S.target * S.boss.mult);
+
+  S.score = 0;
+  S.hands = 4;
+  S.discards = 3;
+  S.playedTypes = [];
+  S.firstType = null;
+  S.log = [];
+  S.lastPlay = null;
+  S.phase = 'play';
+
+  if (S.boss){
+    if (S.boss.id==='needle') S.hands = 1;
+    if (S.boss.id==='well')   S.discards = 0;
+  }
+
+  /* 重洗牌堆 */
+  S.deck = shuffle(S.deck.concat(S.hand, S.discardPile));
+  S.hand = [];
+  S.discardPile = [];
+  dealTo(8);
+
+  renderAll();
+  save();
+  showBlindIntro();
+}
+
+function dealTo(target){
+  while (S.hand.length < target && S.deck.length){
+    S.hand.push(S.deck.shift());
+  }
+  if (S.hand.length < target && S.discardPile.length){
+    S.deck = shuffle(S.discardPile); S.discardPile = [];
+    while (S.hand.length < target && S.deck.length) S.hand.push(S.deck.shift());
+  }
+}
+
+function blindLabel(){
+  return S.blindIdx===0 ? '小盲注' : S.blindIdx===1 ? '大盲注' : 'BOSS：'+(S.boss?S.boss.name:'');
+}
+
+/* ------------------------- 渲染 ------------------------- */
+function renderAll(){
+  el('blindName').textContent = blindLabel();
+  el('anteTag').textContent = '第 '+S.ante+' 注';
+  el('scoreNow').textContent = Math.floor(S.score);
+  el('scoreTarget').textContent = S.target;
+  const pct = Math.min(100, S.score / S.target * 100);
+  const bar = el('scoreBar');
+  bar.style.width = pct + '%';
+  bar.classList.toggle('full', pct>=100);
+
+  el('stHands').textContent = S.hands;
+  el('stDisc').textContent  = S.discards;
+  el('stMoney').textContent = S.money;
+  speedLabel();
+
+  const bd = el('bossDesc');
+  if (S.boss){ bd.classList.remove('hide'); bd.textContent = '⚠ '+S.boss.desc; }
+  else bd.classList.add('hide');
+
+  renderJokers();
+  renderHand();
+  renderPlayArea();
+  renderLog();
+  updateButtons();
+}
+
+/* 中间出牌台：画出打出去的牌 */
+function paintPlayCards(cards, box){
+  box = box || el('playArea');
+  box.innerHTML = '';
+  const nodes = [];
+  for (const c of cards){
+    const d = document.createElement('div');
+    d.className = 'card' + (c.s==='♥'||c.s==='♦' ? ' red':'');
+    d.innerHTML = '<div class="r">'+c.r+'</div><div class="s">'+c.s+'</div><div class="plus"></div>';
+    box.appendChild(d);
+    nodes.push(d);
+  }
+  return nodes;
+}
+
+function renderPlayArea(){
+  const box = el('playArea');
+  if (!box) return;
+  if (!S.lastPlay){
+    box.innerHTML = '<div class="pahint">打出的牌会落在中间结算<br>点下面的牌选中，最多 5 张</div>';
+    return;
+  }
+  const lp = S.lastPlay;
+  paintPlayCards(lp.cards, box);
+  const tag = document.createElement('div');
+  tag.className = 'ptag';
+  tag.innerHTML = HANDS[lp.type].name + ' · 得 <b>'+lp.total+'</b>';
+  box.appendChild(tag);
+}
+
+function renderLog(){
+  const box = el('logbox');
+  if (!box) return;
+  const arr = (S.log || []).slice().reverse();
+  if (!arr.length){
+    box.innerHTML = '<h4>本注记录</h4><div class="logempty">还没出过牌</div>';
+    return;
+  }
+  box.innerHTML = '<h4>本注记录</h4>' + arr.map(r =>
+    '<div class="logrow"><span class="lt">'+r.t+'</span><span class="lk">'+r.k+'</span><span class="ls">+'+r.s+'</span></div>'
+  ).join('');
+}
+
+function renderJokers(){
+  const box = el('jslots');
+  box.innerHTML = '';
+  for (let i=0;i<S.jokerSlots;i++){
+    const inst = S.jokers[i];
+    const d = document.createElement('div');
+    d.className = 'jslot' + (inst?' owned':'');
+    if (inst){
+      const def = JB[inst.id];
+      d.innerHTML = '<div class="jg">'+(def?def.g:'?')+'</div>'+
+                    '<div class="jk">'+(def?def.name:inst.id)+'</div>';
+      d.title = def ? def.name+'：'+def.desc : '';
+      d.onclick = ()=> showJokerInfo(inst);
+    } else {
+      d.innerHTML = '<div class="jg" style="opacity:.22">＋</div>';
+    }
+    box.appendChild(d);
+  }
+}
+
+function renderHand(){
+  const box = el('handCards');
+  box.innerHTML = '';
+  S.hand.forEach((c,i)=>{
+    const d = document.createElement('div');
+    d.className = 'card' + (c.s==='♥'||c.s==='♦' ? ' red':'') + (c.sel?' sel':'');
+    d.innerHTML = '<div class="r">'+c.r+'</div><div class="s">'+c.s+'</div><div class="plus"></div>';
+    d.onclick = ()=> toggleCard(i);
+    box.appendChild(d);
+  });
+}
+
+function updatePreview(){
+  const sel = S.hand.filter(c=>c.sel);
+  const hn = el('handName');
+  const chips = el('calcChips'), mult = el('calcMult'), total = el('calcTotal');
+  if (!sel.length){
+    hn.innerHTML = '选牌看牌型';
+    chips.textContent = '0'; mult.textContent = '0'; total.textContent = '—';
+    return;
+  }
+  const ev = evalPlay(sel);
+  const lv = S.levels[ev.type]||1;
+  const b = HANDS[ev.type];
+  hn.innerHTML = '<b>'+b.name+'</b>' + (lv>1?' <span style="color:#7fd0ff">Lv.'+lv+'</span>':'')
+                 + ' <span style="color:#6d7f76;font-size:11px">（'+sel.length+' 张）</span>';
+  const r = scorePlay(sel);
+  chips.textContent = Math.floor(r.chips);
+  mult.textContent = (Math.round(r.mult*100)/100);
+  total.textContent = r.total;
+}
+
+function updateButtons(){
+  const sel = S.hand.filter(c=>c.sel);
+  const canAct = S.phase==='play';
+  const play = el('btnPlay'), disc = el('btnDiscard');
+  play.disabled  = !canAct || sel.length<1 || sel.length>5 || S.hands<=0;
+  disc.disabled  = !canAct || sel.length<1 || sel.length>5 || S.discards<=0;
+  el('playHint').textContent = sel.length ? (sel.length+' 张') : '选牌';
+  el('btnDiscard').querySelector('small').textContent = '剩 '+S.discards;
+}
+
+/* ------------------------- 交互 ------------------------- */
+function toggleCard(i){
+  if (S.phase!=='play') return;
+  const c = S.hand[i];
+  const selCount = S.hand.filter(x=>x.sel).length;
+  if (!c.sel && selCount>=5) return;   /* 最多 5 张 */
+  c.sel = !c.sel;
+  renderHand();
+  updatePreview();
+  updateButtons();
+}
+
+function sortHand(){
+  const mode = (S._sortMode||0);
+  const key = {
+    0: c=> RANKVAL[c.r]*10 + SUITS.indexOf(c.s),
+    1: c=> SUITS.indexOf(c.s)*100 + RANKVAL[c.r],
+    2: c=> -RANKVAL[c.r],
+  }[mode];
+  S.hand.sort((a,b)=> key(a)-key(b));
+  S._sortMode = (mode+1)%3;
+  renderHand();
+  updateButtons();
+}
+
+/* ------------------------- 出牌 ------------------------- */
+async function doPlay(){
+  if (S.phase!=='play' || S.hands<=0) return;
+  const sel = S.hand.filter(c=>c.sel);
+  if (!sel.length || sel.length>5) return;
+
+  /* BOSS 限制 */
+  if (S.boss){
+    if (S.boss.id==='medium' && sel.length!==5){ toast('通灵师要求：必须打出 5 张牌'); return; }
+  }
+  const evType = evalPlay(sel).type;
+  if (S.boss && S.boss.id==='eye' && S.playedTypes.includes(evType)){
+    toast('独眼：这个牌型本注已经用过了'); return;
+  }
+  if (S.boss && S.boss.id==='echo' && S.firstType && evType!==S.firstType){
+    toast('复读机：只能打「'+HANDS[S.firstType].name+'」'); return;
+  }
+
+  S.phase = 'scoring';
+  updateButtons();
+
+  const res = scorePlay(sel);
+  S.hands--;
+  S.playedTypes.push(evType);
+  if (!S.firstType) S.firstType = evType;
+  if (!S.log) S.log = [];
+  S.log.push({t: HANDS[evType].name, k: sel.map(c=>c.r+c.s).join(' '), s: res.total});
+  if (S.log.length > 12) S.log.shift();
+
+  /* 小丑牌成长 */
+  for (const inst of S.jokers){
+    const d = JB[inst.id];
+    if (d && d.grow) inst.v = (inst.v||0) + d.grow;
+  }
+
+  await animateScore(sel, res);
+
+  S.score += res.total;
+  if (res.total > S.stats.bestHand) S.stats.bestHand = res.total;
+  S.lastPlay = {cards: sel.slice(), type: evType, total: res.total};
+
+  /* 移出手牌 */
+  S.hand = S.hand.filter(c=>!c.sel);
+
+  /* BOSS：钩爪弃牌 */
+  if (S.boss && S.boss.id==='claw' && S.hand.length){
+    const n = Math.min(2, S.hand.length);
+    for (let i=0;i<n;i++){
+      const k = ri(S.hand.length);
+      S.discardPile.push(S.hand.splice(k,1)[0]);
+    }
+    toast('钩爪撕走了 2 张手牌');
+  }
+
+  renderAll();
+
+  if (S.score >= S.target){
+    await sleep(220);
+    onBlindWin();
+    return;
+  }
+  if (S.hands <= 0){
+    await sleep(220);
+    onLose();
+    return;
+  }
+
+  dealTo(8);
+  S.phase = 'play';
+  renderAll();
+  save();
+}
+
+function bump(node){ if(!node) return; node.classList.add('hit'); setTimeout(()=>node.classList.remove('hit'), 240); }
+function fmtNum(v){ return Math.round(v*100)/100; }
+
+async function animateScore(sel, res){
+  const d = 300 / (S.speed||1);
+  const hn = el('handName');
+  const b = HANDS[res.ev.type];
+  const lv = S.levels[res.ev.type] || 1;
+  hn.innerHTML = '<b>'+b.name+'</b>' + (lv>1 ? ' <span style="color:#7fd0ff">Lv.'+lv+'</span>' : '');
+
+  /* 打出的牌落到中间台面；计分的亮蓝框，不计分的压暗 */
+  const nodes = paintPlayCards(sel);
+  for (let i=0;i<sel.length;i++){
+    if (res.ev.scoring.includes(sel[i])) nodes[i].classList.add('score');
+    else nodes[i].classList.add('dead');
+  }
+
+  /* 起点：牌型基础值 */
+  let shownChips = b.chips + (lv-1)*b.lc;
+  let shownMult  = b.mult  + (lv-1)*b.lm;
+  el('calcChips').textContent = shownChips;
+  el('calcMult').textContent  = fmtNum(shownMult);
+  el('calcTotal').textContent = '—';
+  await sleep(d*0.55);
+
+  /* 牌面筹码逐张加 */
+  for (const step of res.log.filter(x=>x.k==='card')){
+    const idx = sel.indexOf(step.card);
+    if (idx>=0 && nodes[idx]){
+      const p = nodes[idx].querySelector('.plus');
+      if (p){ p.textContent = '+'+step.v; p.classList.add('on'); }
+    }
+    shownChips += step.v;
+    el('calcChips').textContent = shownChips;
+    bump(el('pieceChips'));
+    await sleep(d*0.22);
+  }
+
+  /* 小丑牌从左到右结算 */
+  const jl = el('jslots').children;
+  for (const step of res.log.filter(x=>x.k==='jk')){
+    const ji = S.jokers.findIndex(x=>x.uid===step.inst.uid);
+    const slot = ji>=0 ? jl[ji] : null;
+    if (slot){ slot.classList.add('fire'); await sleep(d*0.3); }
+    if (step.kind==='c'){
+      shownChips += step.v;
+      el('calcChips').textContent = shownChips;
+      bump(el('pieceChips'));
+    } else {
+      shownMult = step.kind==='x' ? shownMult*step.v : shownMult+step.v;
+      el('calcMult').textContent = fmtNum(shownMult);
+      bump(el('pieceMult'));
+    }
+    if (slot) setTimeout(()=>slot.classList.remove('fire'), 320);
+    await sleep(d*0.24);
+  }
+
+  el('calcChips').textContent = Math.floor(res.chips);
+  el('calcMult').textContent  = fmtNum(res.mult);
+  await sleep(d*0.45);
+
+  el('calcTotal').textContent = res.total;
+  el('calcTotal').classList.add('hit');
+  floatText('+'+res.total);
+  await sleep(d*0.75);
+  el('calcTotal').classList.remove('hit');
+}
+
+function floatText(txt){
+  const d = document.createElement('div');
+  d.className = 'float'; d.textContent = txt;
+  d.style.left = '50%'; d.style.top = (window.innerHeight*0.42)+'px';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 950);
+}
+
+function toast(msg){
+  const d = document.createElement('div');
+  d.className = 'float'; d.textContent = msg;
+  d.style.left='50%'; d.style.top=(window.innerHeight*0.3)+'px';
+  d.style.fontSize='15px'; d.style.color='#ff9e9e'; d.style.animationDuration='1.6s';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 1600);
+}
+
+/* ------------------------- 弃牌 ------------------------- */
+function doDiscard(){
+  if (S.phase!=='play' || S.discards<=0) return;
+  const sel = S.hand.filter(c=>c.sel);
+  if (!sel.length) return;
+  S.discards--;
+  let gain = 0;
+  for (const inst of S.jokers){
+    const d = JB[inst.id];
+    if (d && d.onDiscard) gain += d.onDiscard();
+  }
+  if (gain){ S.money += gain; floatText('+$'+gain); }
+  S.discardPile.push(...sel);
+  S.hand = S.hand.filter(c=>!c.sel);
+  dealTo(8);
+  renderAll(); updatePreview();
+  save();
+}
+
+/* ------------------------- 结算 ------------------------- */
+function onBlindWin(){
+  S.phase = 'over';
+  let reward = [3,4,5][S.blindIdx];
+  let extra = 0;
+  for (const inst of S.jokers){ const d = JB[inst.id]; if (d && d.onWin) extra += d.onWin(); }
+  const handBonus = S.hands;
+  let interestCap = 5;
+  for (const inst of S.jokers){ const d = JB[inst.id]; if (d && d.interest) interestCap += d.interest; }
+  const interest = Math.min(interestCap, Math.floor(S.money/5));
+  const total = reward + handBonus + interest + extra;
+  S.money += total;
+
+  const isBoss = S.blindIdx===2;
+  showPanel(
+    isBoss ? 'BOSS 已击败' : '通过！',
+    '<div class="rewrow"><span>盲注奖励</span><b>+'+money(reward)+'</b></div>'+
+    '<div class="rewrow"><span>剩余出牌 ×1</span><b>+'+money(handBonus)+'</b></div>'+
+    '<div class="rewrow"><span>利息</span><b>+'+money(interest)+'</b></div>'+
+    (extra?'<div class="rewrow"><span>小丑加成</span><b>+'+money(extra)+'</b></div>':'')+
+    '<div class="rewrow" style="border-top:1px solid rgba(255,255,255,.15);margin-top:6px;padding-top:8px"><span>本注得分</span><b>'+Math.floor(S.score)+' / '+S.target+'</b></div>',
+    [{t:'进入商店', f:()=>{ closePanel(); openShop(isBoss); }}],
+    '现在有 '+money(S.money)
+  );
+  save();
+}
+
+function onLose(){
+  S.phase = 'over';
+  clearSave();
+  showPanel('没能打穿',
+    '<p class="psub">得分 '+Math.floor(S.score)+' / 目标 '+S.target+'<br>'+
+    '倒在第 '+S.ante+' 注 · '+blindLabel()+'<br>'+
+    '最高单手：'+S.stats.bestHand+'</p>',
+    [{t:'再来一局', f:()=>{ closePanel(); startGame(true); }}]
+  );
+}
+
+/* ------------------------- 商店 ------------------------- */
+let shopOffers = [];
+let shopBought = {};
+
+function openShop(isBoss){
+  shopOffers = rollOffers(3);
+  shopBought = {};
+  renderShop(isBoss);
+}
+
+function rollOffers(n){
+  const out = [];
+  const canJoker = S.jokers.length < S.jokerSlots;
+  for (let i=0;i<n;i++){
+    const isJoker = canJoker && (i===0 || rnd() < 0.55);
+    if (isJoker){
+      const cand = JOKERS.filter(j=>{
+        const w = j.rar==='rare'?1 : j.rar==='uncommon'?3 : 6;
+        return rnd()*8 < w;
+      });
+      const j = cand.length? pick(cand) : pick(JOKERS);
+      out.push({kind:'joker', def:j});
+    } else {
+      out.push({kind:'planet', def:pick(PLANETS)});
+    }
+  }
+  return out;
+}
+
+function renderShop(isBoss){
+  const list = shopOffers.map((o,i)=>{
+    const d = o.def;
+    const bought = !!shopBought[i];
+    const afford = S.money >= d.cost;
+    const price = o.kind==='joker' && S.jokers.length>=S.jokerSlots ? '满' : money(d.cost);
+    return '<button class="shopitem'+(bought?' bought':'')+'" data-i="'+i+'">'+
+      '<div class="ic'+(o.kind==='planet'?' planet':'')+'">'+(o.kind==='planet'?'🪐':(d.g||'★'))+'</div>'+
+      '<div class="txt"><div class="nm">'+d.name+'</div><div class="ds">'+d.desc+'</div></div>'+
+      '<div class="pr'+(afford?'':' no')+'">'+price+'</div></button>';
+  }).join('');
+
+  const body =
+    '<div class="money">持有 '+money(S.money)+'</div>'+
+    '<div class="shoplist">'+list+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px">'+
+      '<button class="big ghost" style="margin-top:0" id="shopReroll">刷新商品 $5</button>'+
+      '<button class="big" style="margin-top:0" id="shopLeave">离开商店</button>'+
+    '</div>'+
+    '<div class="jokerdetail">小丑牌槽位 '+S.jokers.length+' / '+S.jokerSlots+'</div>';
+
+  showPanel('商 店', body, []);
+  el('panel').querySelectorAll('.shopitem').forEach(btn=>{
+    btn.onclick = ()=> buyOffer(+btn.dataset.i, isBoss);
+  });
+  el('shopReroll').onclick = ()=>{
+    if (S.money < 5){ toast('钱不够'); return; }
+    S.money -= 5; shopOffers = rollOffers(3); shopBought = {}; renderShop(isBoss); renderAll(); save();
+  };
+  el('shopLeave').onclick = ()=>{
+    closePanel();
+    advanceBlind();
+  };
+}
+
+function buyOffer(i, isBoss){
+  const o = shopOffers[i];
+  if (!o || shopBought[i]) return;
+  const d = o.def;
+  if (S.money < d.cost){ toast('钱不够'); return; }
+  if (o.kind==='joker'){
+    if (S.jokers.length >= S.jokerSlots){ toast('小丑牌槽位满了'); return; }
+    S.money -= d.cost;
+    S.jokers.push({id:d.id, uid:Math.floor(rnd()*1e9), v:0});
+    shopBought[i] = true;
+    renderJokers();
+    el('jslots').lastChild.classList.add('pop');
+    floatText('-'+money(d.cost));
+  } else {
+    S.money -= d.cost;
+    S.levels[d.type] = Math.min(20, (S.levels[d.type]||1) + 1);
+    shopBought[i] = true;
+    floatText('Lv.'+S.levels[d.type]);
+  }
+  renderAll();
+  renderShop(isBoss);
+  save();
+}
+
+function advanceBlind(){
+  if (S.blindIdx < 2){ S.blindIdx++; }
+  else {
+    if (S.ante >= 8){ onWin(); return; }
+    S.ante++; S.blindIdx = 0;
+  }
+  beginBlind();
+}
+
+function onWin(){
+  clearSave();
+  showPanel('通关！',
+    '<p class="psub">你打穿了全部 8 注。<br>最高单手 '+S.stats.bestHand+'。<br><br>'+
+    '要不要试试更难的开局？</p>',
+    [{t:'再来一局', f:()=>{ closePanel(); startGame(true); }}]
+  );
+}
+
+/* ------------------------- 面板 ------------------------- */
+function showPanel(title, body, buttons, sub){
+  const p = el('panel');
+  p.innerHTML = '<h2>'+title+'</h2>'+
+    (sub?'<div class="money">'+sub+'</div>':'')+body+
+    (buttons.length? '<div id="panelBtns"></div>':'');
+  el('modal').classList.remove('hide');
+  if (buttons.length){
+    const box = el('panelBtns');
+    buttons.forEach(b=>{
+      const btn = document.createElement('button');
+      btn.className = 'big';
+      btn.textContent = b.t;
+      btn.onclick = b.f;
+      box.appendChild(btn);
+    });
+  }
+}
+function closePanel(){ el('modal').classList.add('hide'); }
+
+function showBlindIntro(){
+  const isBoss = S.blindIdx===2;
+  showPanel(
+    blindLabel(),
+    '<p class="psub">目标分数 <b style="color:#ffd977;font-size:19px">'+S.target+'</b><br>'+
+    '出牌 '+S.hands+' 次 · 弃牌 '+S.discards+' 次</p>'+
+    (isBoss?'<p class="psub" style="color:#ffb4a8">⚠ '+S.boss.desc+'</p>':'')+
+    '<p class="psub" style="color:#6d7f76;font-size:11.5px">第 '+S.ante+' 注 · '+
+      (S.blindIdx===0?'小盲注':S.blindIdx===1?'大盲注':'BOSS')+'</p>',
+    [{t:'开始', f:closePanel}]
+  );
+}
+
+function showJokerInfo(inst){
+  const d = JB[inst.id];
+  if (!d) return;
+  showPanel(d.name, '<p class="psub">'+d.desc+'</p>'+
+    (d.grow?'<p class="psub" style="color:#7fd0ff">当前：×'+(Math.round((1+(inst.v||0))*100)/100)+'</p>':''),
+    [{t:'知道了', f:closePanel}]);
+}
+
+/* ------------------------- 绑定 ------------------------- */
+el('btnStart').onclick = ()=>{ closePanel(); clearSave(); startGame(true); };
+el('btnResume').onclick = ()=>{
+  const s = load();
+  if (!s){ toast('没有存档'); return; }
+  S = s;
+  if (!S.levels) S.levels = {};
+  if (!S.log) S.log = [];
+  HAND_ORDER.forEach(t=>{ if(!S.levels[t]) S.levels[t]=1; });
+  el('scrMenu').classList.add('hide');
+  el('scrGame').classList.remove('hide');
+  renderAll(); updatePreview();
+};
+el('btnPlay').onclick = doPlay;
+el('btnDiscard').onclick = doDiscard;
+el('btnSort').onclick = sortHand;
+
+/* 速度档：慢 / 中 / 快（存进存档） */
+const SPEEDS = [{v:1.8,l:'慢'},{v:1,l:'中'},{v:0.55,l:'快'}];
+function speedLabel(){
+  const v = (S && S.speed) || 1;
+  let best = SPEEDS[1];
+  for (const s of SPEEDS) if (Math.abs(s.v - v) < Math.abs(best.v - v)) best = s;
+  el('speedBtn').textContent = '速度 ' + best.l;
+}
+el('speedBtn').onclick = ()=>{
+  if (!S) return;
+  const cur = S.speed || 1;
+  let i = SPEEDS.findIndex(s=>Math.abs(s.v-cur)<0.01);
+  i = (i+1) % SPEEDS.length;
+  S.speed = SPEEDS[i].v;
+  speedLabel();
+  save();
+};
+
+/* 键盘快捷键（电脑上方便） */
+document.addEventListener('keydown', e=>{
+  if (!S || S.phase!=='play') return;
+  if (e.key==='Enter'){ e.preventDefault(); if(!el('btnPlay').disabled) doPlay(); }
+  if (e.key==='d'||e.key==='D'){ e.preventDefault(); if(!el('btnDiscard').disabled) doDiscard(); }
+  if (e.key==='s'||e.key==='S'){ e.preventDefault(); sortHand(); }
+});
+
+/* ------------------------- 启动 ------------------------- */
+(function boot(){
+  const s = load();
+  if (s && s.phase!=='over') el('btnResume').classList.remove('hide');
+})();
+
+/* =======================================================================
+   测试钩子（供自动验证脚本使用，正常玩不受影响）
+   ======================================================================= */
+window.__api = {
+  evalPlay, scorePlay,
+  get S(){ return S; },
+  setSeed(n){ SEED = n; },
+  newState, startGame, beginBlind, doPlay, doDiscard, sortHand,
+  openShop, advanceBlind, renderShop, buyOffer, renderAll,
+  targetFor, JB, JOKERS, PLANTS: PLANETS,
+  forceState(o){ S = Object.assign(S||{}, o); },
+};
+window.__S = ()=>S;
+</script>
+</body>
+</html>
