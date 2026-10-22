@@ -608,8 +608,9 @@ function targetFor(ante, idx){
 function save(){
   try{
     const c = JSON.parse(JSON.stringify(S));
-    /* 手牌里的 sel 标记不必存 */
-    c.hand.forEach(x=>delete x.sel);
+    /* 选中标记是临时的，任何一堆里都不该存 */
+    ['hand','deck','discardPile'].forEach(k => (c[k]||[]).forEach(x=>delete x.sel));
+    (c.lastPlay && c.lastPlay.cards || []).forEach(x=>delete x.sel);
     localStorage.setItem(SAVE_KEY, JSON.stringify(c));
   }catch(e){}
 }
@@ -657,8 +658,10 @@ function beginBlind(){
     if (S.boss.id==='well')   S.discards = 0;
   }
 
-  /* 重洗牌堆 */
-  S.deck = shuffle(S.deck.concat(S.hand, S.discardPile));
+  /* 重洗牌堆：三堆合起来洗，顺手清掉选中标记 */
+  const pool = S.deck.concat(S.hand, S.discardPile);
+  for (const c of pool) delete c.sel;
+  S.deck = shuffle(pool);
   S.hand = [];
   S.discardPile = [];
   dealTo(8);
@@ -669,12 +672,13 @@ function beginBlind(){
 }
 
 function dealTo(target){
+  const take = (c)=>{ delete c.sel; S.hand.push(c); };
   while (S.hand.length < target && S.deck.length){
-    S.hand.push(S.deck.shift());
+    take(S.deck.shift());
   }
   if (S.hand.length < target && S.discardPile.length){
     S.deck = shuffle(S.discardPile); S.discardPile = [];
-    while (S.hand.length < target && S.deck.length) S.hand.push(S.deck.shift());
+    while (S.hand.length < target && S.deck.length) take(S.deck.shift());
   }
 }
 
@@ -880,8 +884,11 @@ async function doPlay(){
   if (res.total > S.stats.bestHand) S.stats.bestHand = res.total;
   S.lastPlay = {cards: sel.slice(), type: evType, total: res.total};
 
-  /* 移出手牌 */
+  /* 打出的牌进弃牌堆 —— 不能凭空消失，否则牌堆会越打越少 */
+  const played = S.hand.filter(c=>c.sel);
   S.hand = S.hand.filter(c=>!c.sel);
+  for (const c of played) delete c.sel;
+  S.discardPile.push(...played);
 
   /* BOSS：钩爪弃牌 */
   if (S.boss && S.boss.id==='claw' && S.hand.length){
@@ -1010,6 +1017,7 @@ function doDiscard(){
   }
   if (gain){ S.money += gain; floatText('+$'+gain); }
   S.discardPile.push(...sel);
+  for (const c of sel) delete c.sel;      /* 清掉选中标记，重洗回来才不会再"自动选中" */
   S.hand = S.hand.filter(c=>!c.sel);
   dealTo(8);
   renderAll(); updatePreview();
